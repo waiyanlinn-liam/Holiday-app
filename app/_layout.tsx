@@ -1,5 +1,15 @@
+import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    // removed shouldShowAlert to fix the warning
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>

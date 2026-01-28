@@ -22,22 +22,15 @@ export default function HolidayList() {
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     const isHero = index === 0;
-
     const handlePress = () => {
       // We encode the urlid because it contains a "/"
-
       const encodedId = encodeURIComponent(item.urlid);
-
       console.log("Navigating to details for ID:", encodedId);
-
       router.push({
         pathname: "/details/[id]",
-
         params: {
           id: encodedId,
-
           name: item.name, // You can pass extra data as params to avoid re-fetching
-
           desc: item.description,
         },
       });
