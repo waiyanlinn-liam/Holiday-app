@@ -8,11 +8,10 @@ export default function RootLayout() {
 
       {/* The Detail Page - "modal" makes it slide up on iOS */}
       <Stack.Screen
-        name="details/[id]"
+        name="details"
         options={{
           presentation: "modal",
-          headerShown: true,
-          headerTitle: "Holiday Details",
+          headerShown: false,
         }}
       />
     </Stack>

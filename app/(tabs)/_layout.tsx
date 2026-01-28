@@ -17,8 +17,20 @@ export default function RootLayout() {
       />
 
       <Tabs>
-        <TabSlot />
-
+        {/* --- THE MASKED AREA --- */}
+        <MaskedView
+          style={{ flex: 1 }}
+          maskElement={
+            <LinearGradient
+              // Transparent = Hidden, Black = Visible
+              colors={["transparent", "black", "black", "transparent"]}
+              locations={[0.05, 0.15, 0.82, 0.91]}
+              style={StyleSheet.absoluteFill}
+            />
+          }
+        >
+          <TabSlot />
+        </MaskedView>
         {/* Bottom edge blur mask for the Tab Bar area */}
         <View style={styles.bottomEdgeContainer} pointerEvents="none">
           <MaskedView
