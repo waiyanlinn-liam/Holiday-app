@@ -1,13 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
+// Change this line: remove name and desc from the arguments here
 export const useHolidayNotes = (holidayId: string) => {
-  // Initialize as an empty array instead of a string
   const [notes, setNotes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const storageKey = `@note_${holidayId}`;
+  const nameKey = `@note_name_${holidayId}`;
+  const descKey = `@note_desc_${holidayId}`;
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -15,7 +17,6 @@ export const useHolidayNotes = (holidayId: string) => {
       try {
         const savedData = await AsyncStorage.getItem(storageKey);
         if (savedData !== null) {
-          // Parse the JSON string back into a TypeScript array
           setNotes(JSON.parse(savedData));
         } else {
           setNotes([]);
@@ -26,35 +27,29 @@ export const useHolidayNotes = (holidayId: string) => {
         setIsLoading(false);
       }
     };
-
     loadNotes();
   }, [holidayId]);
 
-  /**
-   * Saves the entire array of notes to AsyncStorage
-   * @param newNotesArray - The updated list of strings
-   */
-  const saveNotes = async (newNotesArray: string[]) => {
+  // Keep the 3 arguments HERE, in the save function
+  const saveNotes = async (
+    newNotesArray: string[],
+    holidayName: string,
+    holidayDesc: string,
+  ) => {
     setIsSaving(true);
     try {
-      // Update local state immediately for a snappy UI
       setNotes(newNotesArray);
-
-      // Convert array to string for AsyncStorage
-      const jsonValue = JSON.stringify(newNotesArray);
-      await AsyncStorage.setItem(storageKey, jsonValue);
+      await AsyncStorage.multiSet([
+        [storageKey, JSON.stringify(newNotesArray)],
+        [nameKey, holidayName],
+        [descKey, holidayDesc],
+      ]);
     } catch (e) {
       console.error("Failed to save notes", e);
     } finally {
-      // Optional: small delay so the 'Saving' state is visible to the user
       setTimeout(() => setIsSaving(false), 400);
     }
   };
 
-  return {
-    notes, // The array of strings
-    saveNotes, // Function to update the list
-    isSaving, // Loading state for the save button
-    isLoading, // Loading state for initial fetch
-  };
+  return { notes, saveNotes, isSaving, isLoading };
 };

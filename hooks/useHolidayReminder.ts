@@ -11,6 +11,8 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
   const reminderKey = `@reminder_${holidayId}`;
   const bodyKey = `@reminder_body_${holidayId}`;
   const timeKey = `@reminder_time_${holidayId}`;
+  const nameKey = `@reminder_name_${holidayId}`;
+  const descKey = `@reminder_desc_${holidayId}`;
 
   useEffect(() => {
     (async () => {
@@ -19,14 +21,15 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
     })();
   }, [holidayId]);
 
-  const scheduleHolidayReminder = async (bodyContent: string) => {
+  const scheduleHolidayReminder = async (
+    bodyContent: string,
+    holidayDesc: string,
+  ) => {
     try {
-      // 1. Cleanup existing notification
       if (reminderId) {
         await Notifications.cancelScheduledNotificationAsync(reminderId);
       }
 
-      // 2. Logic for Target Date
       const [year, month, day] = holidayId.split("-").map(Number);
       const targetDate = new Date(
         year,
@@ -46,7 +49,6 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         return;
       }
 
-      // 3. Schedule with Expo
       const newId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `📅 ${name} Reminder`,
@@ -60,17 +62,19 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         },
       });
 
-      // 4. PREPARE TIME STRING FOR UI
-      // This is the crucial part that your list screen will read
       const timeString = selectedTime.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
 
-      // 5. Save everything to AsyncStorage
-      await AsyncStorage.setItem(reminderKey, newId);
-      await AsyncStorage.setItem(bodyKey, bodyContent);
-      await AsyncStorage.setItem(timeKey, timeString); // <--- SAVING THE TIME HERE
+      // Save all keys including metadata
+      await AsyncStorage.multiSet([
+        [reminderKey, newId],
+        [bodyKey, bodyContent],
+        [timeKey, timeString],
+        [nameKey, name],
+        [descKey, holidayDesc],
+      ]);
 
       setReminderId(newId);
       setShowPicker(false);
@@ -85,7 +89,13 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
     if (reminderId) {
       try {
         await Notifications.cancelScheduledNotificationAsync(reminderId);
-        await AsyncStorage.multiRemove([reminderKey, bodyKey, timeKey]);
+        await AsyncStorage.multiRemove([
+          reminderKey,
+          bodyKey,
+          timeKey,
+          nameKey,
+          descKey,
+        ]);
         setReminderId(null);
         Alert.alert("Removed", "Reminder deleted.");
       } catch (e) {

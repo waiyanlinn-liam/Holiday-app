@@ -72,23 +72,25 @@ export default function RemindScreen() {
             );
 
             if (selectedHoliday) {
-              // 2. Route with Holiday Data
+              // 🔥 FIX: Use the SAME combined ID format as your Home Page
+              const combinedId = `${selectedHoliday.date.iso}|${selectedHoliday.urlid}`;
+
               router.push({
-                pathname: "/details/[id]", // Adjust path to your file structure
+                pathname: "/details/[id]",
                 params: {
-                  id: selectedHoliday.date.iso,
+                  id: encodeURIComponent(combinedId), // This makes the ID match Home Page!
                   name: selectedHoliday.name,
                   desc: selectedHoliday.description,
                 },
               });
             } else {
-              // 3. Route as a Normal Day (Generic info)
+              // For normal days, we use the dateString as the ID
               router.push({
                 pathname: "/details/[id]",
                 params: {
                   id: day.dateString,
                   name: `Date: ${day.dateString}`,
-                  desc: "There are no national holidays on this day. You can still add your own personal notes or plans below!",
+                  desc: "There are no national holidays on this day.",
                 },
               });
             }

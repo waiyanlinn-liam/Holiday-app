@@ -84,12 +84,13 @@ export default function HolidayList() {
     const isHero = section === holidaySections[0] && index === 0;
     const dateObj = new Date(item.date.iso);
 
+    const combinedId = `${item.date.iso}|${item.urlid}`;
     const handlePress = () => {
       router.push({
         pathname: "/details/[id]",
         params: {
-          id: encodeURIComponent(item.urlid),
-          name: item.name,
+          id: encodeURIComponent(combinedId),
+          name: item.name, // Now it looks like "2026-02-12-union-day..."          name: item.name,
           desc: item.description,
         },
       });

@@ -21,7 +21,11 @@ export default function HolidayDetailScreen() {
   const { id, name, desc } = useLocalSearchParams();
   const holidayId = decodeURIComponent(id as string);
 
-  // Hooks logic
+  // Ensure these are strings to avoid type errors in the hooks
+  const holidayName = (name as string) || "Holiday";
+  const holidayDescription = (desc as string) || "";
+
+  // 1. Hook logic (Using the updated hooks)
   const { notes = [], saveNotes, isSaving } = useHolidayNotes(holidayId);
   const {
     reminderId,
@@ -31,7 +35,7 @@ export default function HolidayDetailScreen() {
     setShowPicker,
     scheduleHolidayReminder,
     deleteReminder,
-  } = useHolidayReminder(holidayId, name as string);
+  } = useHolidayReminder(holidayId, holidayName);
 
   // Modal & Body State
   const [isReminderVisible, setIsReminderVisible] = useState(false);
@@ -48,17 +52,22 @@ export default function HolidayDetailScreen() {
     loadReminderBody();
   }, [holidayId]);
 
+  // 2. Updated: Save both body and holiday description for the List screen
   const handleSchedule = async () => {
-    // Pass the current body from state to the hook function
-    await scheduleHolidayReminder(reminderBody);
+    await scheduleHolidayReminder(reminderBody, holidayDescription);
     setIsReminderVisible(false);
   };
 
   const handleDelete = async () => {
     await deleteReminder();
-    await AsyncStorage.removeItem(`@reminder_body_${holidayId}`);
+    // The hook's deleteReminder now handles multiRemove of all keys
     setReminderBody("");
     setIsReminderVisible(false);
+  };
+
+  // 3. Updated: Pass metadata when updating notes
+  const handleUpdateNotes = async (newNotesArray: string[]) => {
+    await saveNotes(newNotesArray, holidayName, holidayDescription);
   };
 
   return (
@@ -89,15 +98,15 @@ export default function HolidayDetailScreen() {
         {/* --- TOP HERO SECTION --- */}
         <GlassCard style={styles.heroCard} hero={true}>
           <Text style={styles.categoryText}>HOLIDAY INFO</Text>
-          <Text style={styles.title}>{name}</Text>
-          <Text style={styles.description}>{desc}</Text>
+          <Text style={styles.title}>{holidayName}</Text>
+          <Text style={styles.description}>{holidayDescription}</Text>
         </GlassCard>
 
         {/* NOTES SECTION */}
         <NoteInput
           notes={notes}
           isSaving={isSaving}
-          onUpdateNotes={saveNotes}
+          onUpdateNotes={handleUpdateNotes} // Now using our metadata-aware handler
         />
       </View>
 

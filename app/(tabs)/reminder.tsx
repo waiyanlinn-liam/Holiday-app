@@ -13,17 +13,23 @@ import {
   View,
 } from "react-native";
 
+// --- INTERFACES ---
+
 interface ReminderItem {
   holidayId: string;
   body: string;
   type: "reminder";
   scheduledTime: string;
+  name: string;
+  description: string;
 }
 
 interface NoteItem {
   holidayId: string;
   items: string[];
   type: "note";
+  name: string;
+  description: string;
 }
 
 type ListItem = ReminderItem | NoteItem;
@@ -37,46 +43,76 @@ export default function ReminderListScreen() {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- DATA FETCHING ---
+
   const fetchData = async () => {
     try {
       setLoading(true);
       const keys = await AsyncStorage.getAllKeys();
 
       // 1. Fetch Reminders
+      // Filter for master keys: @reminder_YYYY-MM-DD-name
       const reminderKeys = keys.filter(
         (k) =>
           k.startsWith("@reminder_") &&
           !k.includes("_body") &&
-          !k.includes("_time"),
+          !k.includes("_time") &&
+          !k.includes("_name") &&
+          !k.includes("_desc"),
       );
+
       const reminderData: ReminderItem[] = await Promise.all(
         reminderKeys.map(async (key) => {
           const holidayId = key.replace("@reminder_", "");
-          const body = await AsyncStorage.getItem(
-            `@reminder_body_${holidayId}`,
-          );
-          const time = await AsyncStorage.getItem(
-            `@reminder_time_${holidayId}`,
-          );
+          const [body, time, savedName, savedDesc] = await Promise.all([
+            AsyncStorage.getItem(`@reminder_body_${holidayId}`),
+            AsyncStorage.getItem(`@reminder_time_${holidayId}`),
+            AsyncStorage.getItem(`@reminder_name_${holidayId}`),
+            AsyncStorage.getItem(`@reminder_desc_${holidayId}`),
+          ]);
+
           return {
             holidayId,
             body: body || "Check your plans!",
-            type: "reminder",
             scheduledTime: time || "Scheduled",
+            type: "reminder",
+            name:
+              savedName ||
+              holidayId.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " "),
+            description: savedDesc || body || "No description",
           };
         }),
       );
 
       // 2. Fetch Notes
-      const noteKeys = keys.filter((k) => k.startsWith("@note_"));
+      // Filter for master keys: @note_YYYY-MM-DD-name
+      const noteKeys = keys.filter(
+        (k) =>
+          k.startsWith("@note_") &&
+          !k.includes("_name") &&
+          !k.includes("_desc"),
+      );
+
       const noteData: NoteItem[] = await Promise.all(
         noteKeys.map(async (key) => {
           const holidayId = key.replace("@note_", "");
-          const savedNotes = await AsyncStorage.getItem(key);
+          const [savedNotes, savedName, savedDesc] = await Promise.all([
+            AsyncStorage.getItem(key),
+            AsyncStorage.getItem(`@note_name_${holidayId}`),
+            AsyncStorage.getItem(`@note_desc_${holidayId}`),
+          ]);
+
+          const parsedNotes = savedNotes ? JSON.parse(savedNotes) : [];
+
           return {
             holidayId,
-            items: savedNotes ? JSON.parse(savedNotes) : [],
+            items: parsedNotes,
             type: "note",
+            name:
+              savedName ||
+              holidayId.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " "),
+            description:
+              savedDesc || (parsedNotes.length > 0 ? parsedNotes[0] : ""),
           };
         }),
       );
@@ -84,7 +120,7 @@ export default function ReminderListScreen() {
       setReminders(reminderData);
       setNotes(noteData.filter((n) => n.items.length > 0));
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching data:", e);
     } finally {
       setLoading(false);
     }
@@ -96,23 +132,38 @@ export default function ReminderListScreen() {
     }, []),
   );
 
+  // --- ACTIONS ---
+
   const deleteItem = async (holidayId: string, type: "reminder" | "note") => {
-    if (type === "reminder") {
-      const id = await AsyncStorage.getItem(`@reminder_${holidayId}`);
-      if (id) await Notifications.cancelScheduledNotificationAsync(id);
-      await AsyncStorage.multiRemove([
-        `@reminder_${holidayId}`,
-        `@reminder_body_${holidayId}`,
-        `@reminder_time_${holidayId}`,
-      ]);
-    } else {
-      await AsyncStorage.removeItem(`@note_${holidayId}`);
+    try {
+      if (type === "reminder") {
+        const notifId = await AsyncStorage.getItem(`@reminder_${holidayId}`);
+        if (notifId)
+          await Notifications.cancelScheduledNotificationAsync(notifId);
+
+        await AsyncStorage.multiRemove([
+          `@reminder_${holidayId}`,
+          `@reminder_body_${holidayId}`,
+          `@reminder_time_${holidayId}`,
+          `@reminder_name_${holidayId}`,
+          `@reminder_desc_${holidayId}`,
+        ]);
+      } else {
+        await AsyncStorage.multiRemove([
+          `@note_${holidayId}`,
+          `@note_name_${holidayId}`,
+          `@note_desc_${holidayId}`,
+        ]);
+      }
+      fetchData();
+    } catch (e) {
+      console.error("Error deleting item:", e);
     }
-    fetchData();
   };
 
   const formatDate = (id: string) => {
     const parts = id.split("-");
+
     if (parts.length < 3) return "Holiday";
     const date = new Date(
       parseInt(parts[0]),
@@ -122,22 +173,28 @@ export default function ReminderListScreen() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  // --- RENDER ---
+
   const renderItem = ({ item }: { item: ListItem }) => {
     const isNote = item.type === "note";
     const displayDate = formatDate(item.holidayId);
 
+    const handlePress = () => {
+      console.log(item.name);
+      console.log(item.description);
+      router.push({
+        pathname: "/details/[id]",
+        params: {
+          id: item.holidayId,
+          name: item.name,
+          desc: item.description,
+        },
+      });
+    };
+
     return (
       <View style={styles.cardWrapper}>
-        <GlassCard
-          onPress={() =>
-            router.push({
-              pathname: "/details/[id]",
-              params: { id: item.holidayId },
-            })
-          }
-          hero={false}
-          style={styles.card}
-        >
+        <GlassCard onPress={handlePress} hero={false} style={styles.card}>
           <View style={styles.cardContent}>
             {/* LEFT: Date Badge */}
             <View style={styles.dateBadge}>
@@ -148,9 +205,7 @@ export default function ReminderListScreen() {
             {/* MIDDLE: Information */}
             <View style={styles.info}>
               <Text style={styles.holidayTitle} numberOfLines={1}>
-                {item.holidayId
-                  .replace(/^\d{4}-\d{2}-\d{2}-/, "")
-                  .replace(/-/g, " ")}
+                {item.name}
               </Text>
 
               {isNote ? (
@@ -182,9 +237,7 @@ export default function ReminderListScreen() {
 
             {/* RIGHT: Delete Action */}
             <TouchableOpacity
-              onPress={() =>
-                deleteItem(item.holidayId, isNote ? "note" : "reminder")
-              }
+              onPress={() => deleteItem(item.holidayId, item.type)}
               style={styles.deleteBtn}
             >
               <View style={styles.deleteIconBg}>
@@ -255,10 +308,6 @@ export default function ReminderListScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: 16,
-    borderRadius: 24,
-  },
   container: { flex: 1 },
   contentWrapper: { flex: 1, paddingTop: 80 },
   screenTitle: {
@@ -268,37 +317,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     marginBottom: 20,
   },
-
-  // GLASSY TAB TOGGLE
   toggleContainer: {
     flexDirection: "row",
     marginHorizontal: 25,
     marginBottom: 25,
     borderRadius: 20,
     padding: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: "rgba(0, 0, 0, 0.05)",
   },
   tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 16 },
   activeTab: {
-    backgroundColor: "#e8e4e4",
+    backgroundColor: "#f5f2f2",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  tabText: { fontWeight: "700", color: "rgba(0,0,0,0.4)", fontSize: 15 },
+  tabText: { fontWeight: "700", color: "rgb(23, 23, 24)", fontSize: 15 },
   activeTabText: { color: "#000" },
-
-  // LIST & CARD
   list: { paddingHorizontal: 20, paddingBottom: 100 },
   cardWrapper: { marginBottom: 16 },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 8, // Let GlassCard handle the outer padding
-  },
-
-  // DATE BADGE
+  card: { padding: 8, borderRadius: 24 },
+  cardContent: { flexDirection: "row", alignItems: "center" },
   dateBadge: {
     width: 60,
     height: 60,
@@ -306,10 +349,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   dateText: {
     color: "#FFF",
@@ -319,8 +358,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   dayText: { color: "#FFF", fontSize: 22, fontWeight: "900", marginTop: -2 },
-
-  // INFO SECTION
   info: { flex: 1, marginLeft: 16, justifyContent: "center" },
   holidayTitle: {
     fontSize: 18,
@@ -330,8 +367,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   previewText: { fontSize: 14, color: "#3A3A3C", opacity: 0.7 },
-
-  // SUB-DETAILS
   timeTag: { flexDirection: "row", alignItems: "center", marginTop: 4 },
   timeText: {
     fontSize: 13,
@@ -339,7 +374,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: 4,
   },
-
   noteBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -356,8 +390,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: 4,
   },
-
-  // DELETE BUTTON
   deleteBtn: { padding: 10 },
   deleteIconBg: {
     width: 36,
@@ -370,7 +402,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: "center",
     marginTop: 100,
-    color: "#8E8E93",
+    color: "#f0f0f7",
     fontSize: 16,
     fontWeight: "500",
   },
