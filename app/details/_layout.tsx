@@ -5,7 +5,7 @@ import { Stack } from "expo-router";
 
 export default function DetailsLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: "#e2e2e9" }}>
+    <View style={{ flex: 1 }}>
       <ImageBackground
         source={{
           uri: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",

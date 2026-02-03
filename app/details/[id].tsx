@@ -1,6 +1,5 @@
 import { GlassCard } from "@/components/GlassCard";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Keyboard,
@@ -17,7 +16,7 @@ import { NoteInput } from "@/components/NoteInput";
 import { ReminderSection } from "@/components/Reminder";
 import { useHolidayNotes } from "@/hooks/useHolidayNotes";
 import { useHolidayReminder } from "@/hooks/useHolidayReminder";
-import MaskedView from "@react-native-masked-view/masked-view";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function HolidayDetailScreen() {
@@ -28,7 +27,6 @@ export default function HolidayDetailScreen() {
   const holidayName = (name as string) || "Holiday";
   const holidayDescription = (desc as string) || "";
 
-  // 1. EXTRACT DATE: Parse the holidayId (e.g., "2026-02-12")
   const dateString = holidayId.split("|")[0];
   const dateObj = new Date(dateString);
   const isValidDate = !isNaN(dateObj.getTime());
@@ -48,16 +46,7 @@ export default function HolidayDetailScreen() {
     deleteReminder,
   } = useHolidayReminder(holidayId, holidayName);
 
-  useEffect(() => {
-    const loadReminderBody = async () => {
-      const savedBody = await AsyncStorage.getItem(
-        `@reminder_body_${holidayId}`,
-      );
-      if (savedBody) setReminderBody(savedBody);
-    };
-    loadReminderBody();
-  }, [holidayId]);
-
+  // Keyboard Listeners
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -85,57 +74,81 @@ export default function HolidayDetailScreen() {
 
   return (
     <View style={styles.mainContainer}>
-      <MaskedView
-        style={{ flex: 1 }}
-        maskElement={
-          <LinearGradient
-            colors={["transparent", "black"]}
-            locations={[isKeyboardActive ? 0.1 : 0.1, 0.18]}
-            style={StyleSheet.absoluteFill}
-          />
-        }
+      <Stack.Screen
+        options={{
+          headerTitle: "Back",
+          headerTransparent: true,
+          headerRight: () => (
+            <Pressable
+              onPress={() => setIsReminderVisible(true)}
+              style={({ pressed }) => [
+                styles.navIcon,
+                pressed && { opacity: 0.6 },
+              ]}
+            >
+              <Ionicons
+                name={reminderId ? "notifications" : "notifications-outline"}
+                size={24}
+                color={reminderId ? "#007AFF" : "#1A1A1B"}
+              />
+            </Pressable>
+          ),
+        }}
+      />
+      <ScrollView
+        ref={scrollRef}
+        style={{ backgroundColor: "transparent" }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: isKeyboardActive ? 350 : 80 },
+        ]}
+        removeClippedSubviews={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          ref={scrollRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: isKeyboardActive ? 350 : 80 },
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.content}>
-            <GlassCard style={styles.heroCard} hero={true}>
-              <View style={styles.heroHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.categoryText}>HOLIDAY INFO</Text>
-                  <Text style={styles.title}>{holidayName}</Text>
-                </View>
-
-                {/* --- DATE BADGE SECTION --- */}
-                {isValidDate && (
-                  <View style={styles.dateBadge}>
-                    <Text style={styles.dayText}>{dateObj.getDate()}</Text>
-                    <Text style={styles.monthText}>
-                      {dateObj
-                        .toLocaleString("en-US", { month: "short" })
-                        .toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+        <View style={styles.content}>
+          <GlassCard style={styles.heroCard} hero={true}>
+            {/* ... GlassCard Content ... */}
+            <View style={styles.heroHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.categoryText}>HOLIDAY INFO</Text>
+                <Text style={styles.title}>{holidayName}</Text>
               </View>
+              {isValidDate && (
+                <View style={styles.dateBadge}>
+                  <Text style={styles.dayText}>{dateObj.getDate()}</Text>
+                  <Text style={styles.monthText}>
+                    {dateObj
+                      .toLocaleString("en-US", { month: "short" })
+                      .toUpperCase()}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.description}>{holidayDescription}</Text>
+          </GlassCard>
 
-              <Text style={styles.description}>{holidayDescription}</Text>
-            </GlassCard>
+          <NoteInput
+            notes={notes}
+            isSaving={isSaving}
+            onUpdateNotes={handleUpdateNotes}
+          />
+        </View>
+      </ScrollView>
 
-            <NoteInput
-              notes={notes}
-              isSaving={isSaving}
-              onUpdateNotes={handleUpdateNotes}
-            />
-          </View>
-        </ScrollView>
-      </MaskedView>
+      {/* THE "VANISHING" SHIELD */}
+      <View style={styles.topFadeContainer} pointerEvents="none">
+        <LinearGradient
+          // Color 1: The Sky Blue at the very top of the blurred image
+          // Color 2: Keeping it solid to create the "Shield"
+          // Color 3: Transitioning to transparent
+          colors={["#935dac", "#b956ca", "transparent"]}
+          // 0.0 to 0.7: Solid Shield (Text is 100% hidden)
+          // 0.7 to 1.0: Smooth fade out
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
 
       <Modal
         visible={isReminderVisible}
@@ -180,9 +193,26 @@ export default function HolidayDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  mainContainer: { flex: 1 },
+  mainContainer: { flex: 1, backgroundColor: "transparent" },
   scrollContent: { paddingTop: 110 },
   content: { paddingHorizontal: 20 },
+  // THE MAGIC SECTION
+  topFadeContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140, // Should match scrollContent paddingTop
+    zIndex: 10, // Ensures it stays above the ScrollView
+  },
+
+  // Navigation
+  navIcon: {
+    marginRight: 16,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.8)",
+  },
   heroCard: {
     padding: 20,
     borderRadius: 28,
