@@ -2,10 +2,25 @@ import { CustomTabBar } from "@/components/TabBar";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Notifications from "expo-notifications";
 import { TabList, Tabs, TabSlot, TabTrigger } from "expo-router/ui";
+import { useEffect } from "react";
 import { ImageBackground, StyleSheet, View } from "react-native";
 
 export default function RootLayout() {
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== "granted") {
+        const { status: newStatus } =
+          await Notifications.requestPermissionsAsync();
+        if (newStatus !== "granted") {
+          console.warn("Notification permissions not granted!");
+        }
+      }
+    };
+    checkPermissions();
+  }, []);
   return (
     <View style={{ flex: 1 }}>
       <ImageBackground

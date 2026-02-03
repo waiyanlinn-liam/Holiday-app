@@ -168,7 +168,7 @@ export default function LeaveScreen() {
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#f8f9fa" },
+  screen: { flex: 1 },
   headerContainer: {
     marginTop: 80,
     paddingHorizontal: 25,

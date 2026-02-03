@@ -1,12 +1,11 @@
 import React from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
+import { ImageBackground, Platform, StyleSheet, View } from "react-native";
 
 import { Stack } from "expo-router";
 
 export default function DetailsLayout() {
   return (
-    <View style={{ flex: 1 }}>
-      {/* Universal Background */}
+    <View style={{ flex: 1, backgroundColor: "#e2e2e9" }}>
       <ImageBackground
         source={{
           uri: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",
@@ -20,8 +19,10 @@ export default function DetailsLayout() {
           headerTransparent: true,
           headerTintColor: "#1A1A1B",
           headerTitleStyle: { fontWeight: "700" },
-          // No mask here, just the pure stack
+          // Force transparency on the stack container
           contentStyle: { backgroundColor: "transparent" },
+          // Change animation to fade to hide background "pops"
+          animation: Platform.OS === "ios" ? "default" : "fade",
         }}
       >
         <Stack.Screen name="[id]" options={{ headerTitle: "" }} />

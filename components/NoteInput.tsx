@@ -1,13 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    LayoutAnimation,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { GlassCard } from "./GlassCard";
 
@@ -23,22 +25,28 @@ export const NoteInput = ({
   onUpdateNotes,
 }: NoteInputProps) => {
   const [inputText, setInputText] = useState("");
+  const [editText, setEditText] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  const handleAddOrUpdate = () => {
+  // Add a new note (Inline)
+  const handleAdd = () => {
     if (inputText.trim().length === 0) return;
-
-    let updatedNotes = [...notes];
-    if (editingIndex !== null) {
-      updatedNotes[editingIndex] = inputText.trim();
-      setEditingIndex(null);
-    } else {
-      updatedNotes.push(inputText.trim());
-    }
-
+    const updatedNotes = [...notes, inputText.trim()];
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
     onUpdateNotes(updatedNotes);
     setInputText("");
+  };
+
+  // Update existing note (From Modal)
+  const handleUpdate = () => {
+    if (editText.trim().length === 0 || editingIndex === null) return;
+    let updatedNotes = [...notes];
+    updatedNotes[editingIndex] = editText.trim();
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+    onUpdateNotes(updatedNotes);
+    setEditingIndex(null);
+    setEditText("");
   };
 
   const deleteNote = (index: number) => {
@@ -48,8 +56,8 @@ export const NoteInput = ({
   };
 
   const startEdit = (index: number) => {
+    setEditText(notes[index]);
     setEditingIndex(index);
-    setInputText(notes[index]);
   };
 
   return (
@@ -67,77 +75,99 @@ export const NoteInput = ({
           <GlassCard key={index} style={{ marginBottom: 8 }}>
             <View style={styles.noteContent}>
               <Text style={styles.noteText}>{item}</Text>
-              <Pressable
-                onPress={() => startEdit(index)}
-                style={styles.iconBtn}
-              >
-                <Ionicons name="pencil-sharp" size={16} color="#007AFF" />
-              </Pressable>
-              <Pressable
-                onPress={() => deleteNote(index)}
-                style={styles.iconBtn}
-              >
-                <Ionicons name="trash-bin-outline" size={16} color="#FF3B30" />
-              </Pressable>
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={() => startEdit(index)}
+                  style={styles.iconBtn}
+                >
+                  <Ionicons name="pencil-sharp" size={16} color="#007AFF" />
+                </Pressable>
+                <Pressable
+                  onPress={() => deleteNote(index)}
+                  style={styles.iconBtn}
+                >
+                  <Ionicons
+                    name="trash-bin-outline"
+                    size={16}
+                    color="#FF3B30"
+                  />
+                </Pressable>
+              </View>
             </View>
           </GlassCard>
         ))}
       </View>
 
-      {/* --- INPUT AREA --- */}
-      <KeyboardAvoidingView>
-        <GlassCard
-          style={[
-            styles.inputCard,
-            editingIndex !== null && styles.inputCardEditing,
-          ]}
+      {/* --- INPUT FOR NEW NOTE --- */}
+      <GlassCard style={styles.inputCard}>
+        <TextInput
+          style={styles.input}
+          placeholder="Tap to add a new plan..."
+          placeholderTextColor="rgba(0,0,0,0.3)"
+          multiline
+          value={inputText}
+          onChangeText={setInputText}
+        />
+        <View style={styles.inputFooter}>
+          <Pressable
+            onPress={handleAdd}
+            style={({ pressed }) => [
+              styles.addButton,
+              pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+            ]}
+          >
+            <Ionicons name="add-circle" size={20} color="#FFF" />
+            <Text style={styles.addButtonText}>Add Note</Text>
+          </Pressable>
+        </View>
+      </GlassCard>
+
+      {/* --- EDIT MODAL --- */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalContent}
+      >
+        <Modal
+          visible={editingIndex !== null}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setEditingIndex(null)}
         >
-          <TextInput
-            style={styles.input}
-            placeholder={
-              editingIndex !== null
-                ? "Editing note..."
-                : "Tap to add a new plan..."
-            }
-            placeholderTextColor="rgba(0,0,0,0.3)"
-            multiline
-            value={inputText}
-            onChangeText={setInputText}
-          />
-          <View style={styles.inputFooter}>
-            {editingIndex !== null && (
-              <Pressable
-                onPress={() => {
-                  setEditingIndex(null);
-                  setInputText("");
-                }}
-                style={styles.cancelBtn}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </Pressable>
-            )}
-            <Pressable
-              onPress={handleAddOrUpdate}
-              style={({ pressed }) => [
-                styles.addButton,
-                {
-                  backgroundColor:
-                    editingIndex !== null ? "#4a4a4a" : "#007AFF",
-                },
-                pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-              ]}
-            >
-              <Ionicons
-                name={editingIndex !== null ? "checkmark-done" : "add-circle"}
-                size={20}
-                color="#FFF"
+          <View style={styles.modalOverlay}>
+            <GlassCard style={styles.editCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Edit Plan</Text>
+                <Pressable onPress={() => setEditingIndex(null)}>
+                  <Ionicons name="close" size={24} color="#8E8E93" />
+                </Pressable>
+              </View>
+
+              <TextInput
+                style={[styles.input, styles.editInput]}
+                multiline
+                autoFocus
+                value={editText}
+                onChangeText={setEditText}
               />
-              <Text style={styles.addButtonText}>
-                {editingIndex !== null ? "Update" : "Add Note"}
-              </Text>
-            </Pressable>
+
+              <View style={styles.modalFooter}>
+                <Pressable
+                  onPress={handleUpdate}
+                  style={[
+                    styles.addButton,
+                    {
+                      backgroundColor: "#007AFF",
+                      width: "100%",
+                      justifyContent: "center",
+                    },
+                  ]}
+                >
+                  <Text style={styles.addButtonText}>Save Changes</Text>
+                </Pressable>
+              </View>
+            </GlassCard>
           </View>
-        </GlassCard>
+        </Modal>
       </KeyboardAvoidingView>
     </View>
   );
@@ -165,20 +195,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginLeft: 8,
   },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#007AFF",
-  },
-  listContainer: {
-    marginBottom: 16,
-  },
-
-  noteContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  badgeText: { fontSize: 10, fontWeight: "700", color: "#007AFF" },
+  listContainer: { marginBottom: 16 },
+  noteContent: { flexDirection: "row", alignItems: "center" },
   noteText: {
     flex: 1,
     fontSize: 15,
@@ -186,24 +205,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: "500",
   },
-  actionRow: {
-    flexDirection: "row",
-    padding: 2,
-  },
-  iconBtn: {
-    padding: 8,
-    borderRadius: 10,
-  },
+  actionRow: { flexDirection: "row" },
+  iconBtn: { padding: 8, borderRadius: 10 },
 
   // Input Card
   inputCard: {
     padding: 16,
     borderRadius: 24,
-    backgroundColor: "#9f9b9b",
-  },
-  inputCardEditing: {
-    borderColor: "#939593",
-    borderWidth: 1,
+    backgroundColor: "rgba(159, 155, 155, 0.15)",
   },
   input: {
     fontSize: 16,
@@ -216,20 +225,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.03)",
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#007AFF",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 14,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
   },
   addButtonText: {
     color: "#FFF",
@@ -237,6 +240,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 6,
   },
-  cancelBtn: { paddingHorizontal: 16 },
-  cancelText: { color: "#8E8E93", fontWeight: "600", fontSize: 14 },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: { width: "100%", maxWidth: 400 },
+  editCard: { padding: 20, borderRadius: 28, backgroundColor: "#c9c3c3" },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "800", color: "#1C1C1E" },
+  editInput: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 100,
+    marginBottom: 20,
+  },
+  modalFooter: { width: "100%" },
 });

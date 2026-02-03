@@ -17,7 +17,12 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
   useEffect(() => {
     (async () => {
       const saved = await AsyncStorage.getItem(reminderKey);
-      if (saved) setReminderId(saved);
+      if (saved) {
+        console.log(
+          `[Init] Found existing reminder for ${holidayId}: ${saved}`,
+        );
+        setReminderId(saved);
+      }
     })();
   }, [holidayId]);
 
@@ -25,8 +30,10 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
     bodyContent: string,
     holidayDesc: string,
   ) => {
+    console.log("--- Starting Schedule Process ---");
     try {
       if (reminderId) {
+        console.log(`[1] Cancelling previous notification: ${reminderId}`);
         await Notifications.cancelScheduledNotificationAsync(reminderId);
       }
 
@@ -40,15 +47,21 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         0,
       );
 
+      console.log(`[2] Target Date Constructed: ${targetDate.toString()}`);
+
       const secondsUntilHoliday = Math.floor(
         (targetDate.getTime() - Date.now()) / 1000,
       );
 
+      console.log(`[3] Seconds until trigger: ${secondsUntilHoliday}`);
+
       if (secondsUntilHoliday <= 0) {
+        console.error("[Error] Calculated time is in the past.");
         Alert.alert("Time Error", "The selected time is in the past!");
         return;
       }
 
+      console.log("[4] Requesting notification schedule...");
       const newId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `📅 ${name} Reminder`,
@@ -62,12 +75,14 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         },
       });
 
+      console.log(`[5] Notification scheduled successfully. ID: ${newId}`);
+
       const timeString = selectedTime.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
 
-      // Save all keys including metadata
+      console.log("[6] Saving metadata to AsyncStorage...");
       await AsyncStorage.multiSet([
         [reminderKey, newId],
         [bodyKey, bodyContent],
@@ -78,15 +93,17 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
 
       setReminderId(newId);
       setShowPicker(false);
+      console.log("--- Schedule Process Complete ---");
       Alert.alert("Reminder Set", `Notification scheduled for ${timeString}`);
     } catch (e) {
-      console.error(e);
+      console.error("[Critical Error]", e);
       Alert.alert("Error", "Could not schedule reminder.");
     }
   };
 
   const deleteReminder = async () => {
     if (reminderId) {
+      console.log(`[Delete] Removing reminder: ${reminderId}`);
       try {
         await Notifications.cancelScheduledNotificationAsync(reminderId);
         await AsyncStorage.multiRemove([
@@ -97,9 +114,10 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
           descKey,
         ]);
         setReminderId(null);
+        console.log("[Delete] Cleanup complete.");
         Alert.alert("Removed", "Reminder deleted.");
       } catch (e) {
-        console.error(e);
+        console.error("[Delete Error]", e);
       }
     }
   };
