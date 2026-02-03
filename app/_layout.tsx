@@ -1,16 +1,19 @@
 import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    // removed shouldShowAlert to fix the warning
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
 export default function RootLayout() {
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        // removed shouldShowAlert to fix the warning
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+  }, []);
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {/* The Tabs Group */}

@@ -4,11 +4,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -110,7 +114,6 @@ export default function HolidayDetailScreen() {
         />
       </View>
 
-      {/* --- REMINDER MODAL --- */}
       <Modal
         visible={isReminderVisible}
         animationType="slide"
@@ -122,29 +125,47 @@ export default function HolidayDetailScreen() {
             style={styles.modalDismissArea}
             onPress={() => setIsReminderVisible(false)}
           />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalIndicator} />
 
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalSheetTitle}>Reminder Settings</Text>
-              <Pressable onPress={() => setIsReminderVisible(false)}>
-                <Ionicons name="close-circle" size={28} color="#646465" />
-              </Pressable>
+          {/* Use KeyboardAvoidingView to push the sheet up */}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ width: "100%" }}
+          >
+            <View style={styles.modalSheet}>
+              <View style={styles.modalIndicator} />
+
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalSheetTitle}>Reminder Settings</Text>
+                <Pressable onPress={() => setIsReminderVisible(false)}>
+                  <Ionicons name="close-circle" size={28} color="#646465" />
+                </Pressable>
+              </View>
+
+              {/* ScrollView ensures content is reachable even on small screens with keyboard open */}
+              <ScrollView
+                bounces={false}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                  <View>
+                    <ReminderSection
+                      reminderId={reminderId}
+                      reminderBody={reminderBody}
+                      setReminderBody={setReminderBody}
+                      notes={notes}
+                      selectedTime={selectedTime}
+                      showPicker={showPicker}
+                      setShowPicker={setShowPicker}
+                      onTimeChange={(_, date) => date && setSelectedTime(date)}
+                      onSchedule={handleSchedule}
+                      onDelete={handleDelete}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+              </ScrollView>
             </View>
-
-            <ReminderSection
-              reminderId={reminderId}
-              reminderBody={reminderBody}
-              setReminderBody={setReminderBody}
-              notes={notes}
-              selectedTime={selectedTime}
-              showPicker={showPicker}
-              setShowPicker={setShowPicker}
-              onTimeChange={(_, date) => date && setSelectedTime(date)}
-              onSchedule={handleSchedule}
-              onDelete={handleDelete}
-            />
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>
@@ -195,8 +216,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
-    maxHeight: "85%",
+    paddingBottom: Platform.OS === "ios" ? 20 : 10,
+    maxHeight: Platform.OS === "ios" ? "80%" : "90%",
   },
   modalIndicator: {
     width: 40,

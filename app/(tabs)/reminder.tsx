@@ -253,8 +253,6 @@ export default function ReminderListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.contentWrapper}>
-        <Text style={styles.screenTitle}>My Plans</Text>
-
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "reminders" && styles.activeTab]}
