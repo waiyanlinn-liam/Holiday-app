@@ -58,7 +58,7 @@ export const ReminderSection = ({
             <Text style={styles.suggestionTitle}>Use a note as message:</Text>
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={false}
+              showsHorizontalScrollIndicator={true}
               contentContainerStyle={styles.chipScroll}
             >
               {notes.map((note, index) => (

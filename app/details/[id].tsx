@@ -17,6 +17,7 @@ import { ReminderSection } from "@/components/Reminder";
 import { useHolidayNotes } from "@/hooks/useHolidayNotes";
 import { useHolidayReminder } from "@/hooks/useHolidayReminder";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function HolidayDetailScreen() {
@@ -46,6 +47,47 @@ export default function HolidayDetailScreen() {
     deleteReminder,
   } = useHolidayReminder(holidayId, holidayName);
 
+  useEffect(() => {
+    const syncReminderData = async () => {
+      const bodyKey = `@reminder_body_${holidayId}`;
+      const timeKey = `@reminder_time_${holidayId}`;
+
+      const values = await AsyncStorage.multiGet([bodyKey, timeKey]);
+      const savedBody = values[0][1];
+      const savedTimeStr = values[1][1];
+
+      if (savedBody) setReminderBody(savedBody);
+
+      if (savedTimeStr) {
+        try {
+          // 1. Clean the string (removes special hidden characters like the one in your log)
+          const cleanTime = savedTimeStr.replace(/\s+/g, " ").trim();
+
+          // 2. Split into parts (e.g., ["5:43", "AM"])
+          const [time, modifier] = cleanTime.split(" ");
+          let [hours, minutes] = time.split(":").map(Number);
+
+          // 3. Convert 12h format to 24h for the Date object
+          if (modifier?.toUpperCase() === "PM" && hours < 12) hours += 12;
+          if (modifier?.toUpperCase() === "AM" && hours === 12) hours = 0;
+
+          const newDate = new Date();
+          newDate.setHours(hours, minutes, 0, 0);
+
+          // Check if it's a valid date before setting
+          if (!isNaN(newDate.getTime())) {
+            setSelectedTime(newDate);
+          }
+        } catch (e) {
+          console.error("Error parsing saved time string:", e);
+        }
+      }
+    };
+
+    if (reminderId) {
+      syncReminderData();
+    }
+  }, [holidayId, reminderId]);
   // Keyboard Listeners
   useEffect(() => {
     const showSub = Keyboard.addListener(
@@ -139,7 +181,7 @@ export default function HolidayDetailScreen() {
       {/* THE "VANISHING" SHIELD */}
       <View style={styles.topFadeContainer} pointerEvents="none">
         <LinearGradient
-          // Color 1: The Sky Blue at the very top of the blurred image
+          // Color 1: at the very top of the blurred image
           // Color 2: Keeping it solid to create the "Shield"
           // Color 3: Transitioning to transparent
           colors={["#935dac", "#b956ca", "transparent"]}

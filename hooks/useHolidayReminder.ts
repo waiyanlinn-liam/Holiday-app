@@ -56,7 +56,6 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
       console.log(`[3] Seconds until trigger: ${secondsUntilHoliday}`);
 
       if (secondsUntilHoliday <= 0) {
-        console.error("[Error] Calculated time is in the past.");
         Alert.alert("Time Error", "The selected time is in the past!");
         return;
       }
@@ -95,8 +94,7 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
       setShowPicker(false);
       console.log("--- Schedule Process Complete ---");
       Alert.alert("Reminder Set", `Notification scheduled for ${timeString}`);
-    } catch (e) {
-      console.error("[Critical Error]", e);
+    } catch (e: any) {
       Alert.alert("Error", "Could not schedule reminder.");
     }
   };
