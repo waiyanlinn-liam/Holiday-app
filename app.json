@@ -20,7 +20,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["SCHEDULE_EXACT_ALARM", "POST_NOTIFICATIONS"],
+      "permissions": [
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS"
+      ],
       "package": "com.anonymous.myapp"
     },
     "web": {
@@ -53,6 +56,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "635f913c-d44b-48db-a96d-1ca47b0a517f"
+      }
     }
   }
 }

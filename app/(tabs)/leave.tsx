@@ -303,13 +303,15 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
   horizontalCard: {
-    width: "100%",
+    width: SCREEN_WIDTH * 0.8, // 🔒 lock width
     padding: 30,
     borderRadius: 45,
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
+    alignSelf: "stretch", // 🔒 force stretch
   },
+
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
