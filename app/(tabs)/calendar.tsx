@@ -10,15 +10,30 @@ const { width } = Dimensions.get("window");
 export default function RemindScreen() {
   const markedDates = useMemo(() => {
     const marks: any = {};
+
+    // 1. Mark Holidays (Gold)
     holidayData.response.holidays.forEach((holiday) => {
       marks[holiday.date.iso] = {
         selected: true,
-        selectedColor: "rgba(255, 215, 0, 0.8)", // Semi-solid Gold
+        selectedColor: "#FFD700", // Gold
         selectedTextColor: "#000000",
         marked: true,
         dotColor: "#FF3B30",
       };
     });
+
+    // 2. Mark Today (Blue Circle)
+    const today = new Date().toISOString().split("T")[0];
+
+    // If today is ALSO a holiday, you might want to decide which color wins.
+    // Here, we let the Blue Today circle override or merge:
+    marks[today] = {
+      ...marks[today], // Keep the holiday dot if it exists
+      selected: true,
+      selectedColor: "#007AFF", // Bright Blue circle
+      selectedTextColor: "#FFFFFF",
+    };
+
     return marks;
   }, []);
 
@@ -26,65 +41,40 @@ export default function RemindScreen() {
     <View style={styles.container}>
       <GlassCard style={styles.glassAdjust}>
         <Calendar
-          // Ensures the 5th and 6th rows aren't hidden by the library
           hideExtraDays={false}
           enableSwipeMonths={true}
+          // Pass the memoized marks here
+          markedDates={markedDates}
           theme={{
             calendarBackground: "transparent",
-
-            // 1. HEADER - Use a strong blue to stand out against the white blur
             monthTextColor: "#007AFF",
             textMonthFontWeight: "800",
             textMonthFontSize: 18,
-            textSectionTitleColor: "#0056b3", // Days of week (S, M, T...)
+            textSectionTitleColor: "#0056b3",
             arrowColor: "#007AFF",
-
-            // 2. NORMAL DATES - Switch to a dark grey/charcoal.
-            // Pure white is invisible on your GlassCard.
             dayTextColor: "#2C3E50",
             textDayFontWeight: "600",
-
-            // 3. THE "MISSING" DATES FIX (27, 28, 29...)
-            // These are often 'disabled' (next month). We make them darker grey.
             textDisabledColor: "rgba(0, 0, 0, 0.25)",
-
-            // 4. TODAY - A bright red to pop out
-            todayTextColor: "#FF3B30",
+            // We disable the default today text color so our
+            // blue "selected" circle is the primary focus
+            todayTextColor: "#007AFF",
           }}
-          markedDates={useMemo(() => {
-            const marks: any = {};
-            holidayData.response.holidays.forEach((holiday) => {
-              marks[holiday.date.iso] = {
-                selected: true,
-                // Use a solid, dark, or very vibrant color for the holiday circle
-                selectedColor: "#FFD700", // Gold
-                selectedTextColor: "#000000", // Black text on the gold circle
-                marked: true,
-                dotColor: "#FF3B30",
-              };
-            });
-            return marks;
-          }, [])}
           onDayPress={(day) => {
-            // 1. Try to find if the clicked day is a holiday
             const selectedHoliday = holidayData.response.holidays.find(
               (h) => h.date.iso === day.dateString,
             );
 
             if (selectedHoliday) {
-              // 🔥 FIX: Use the SAME combined ID format as your Home Page
               const combinedId = `${selectedHoliday.date.iso}|${selectedHoliday.urlid}`;
-
               router.push({
                 pathname: "/details/[id]",
                 params: {
-                  id: encodeURIComponent(combinedId), // This makes the ID match Home Page!
+                  id: encodeURIComponent(combinedId),
                   name: selectedHoliday.name,
                   desc: selectedHoliday.description,
                 },
               });
             } else {
-              // For normal days, we use the dateString as the ID
               router.push({
                 pathname: "/details/[id]",
                 params: {
@@ -110,15 +100,6 @@ const styles = StyleSheet.create({
   glassAdjust: {
     width: width * 0.95,
     padding: 10,
-    // REMOVE fixed heights here. Let the calendar define the height
-    // to prevent cutting off the 30th/31st.
     borderRadius: 20,
-  },
-  calendarInternal: {
-    // Force the internal calendar to not have a background
-    backgroundColor: "transparent",
-    borderRadius: 15,
-    // Add a bit of bottom padding so the last row isn't hugging the edge
-    paddingBottom: 10,
   },
 });
