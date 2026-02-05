@@ -28,7 +28,6 @@ export const NoteInput = ({
   const [editText, setEditText] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  // Add a new note (Inline)
   const handleAdd = () => {
     if (inputText.trim().length === 0) return;
     const updatedNotes = [...notes, inputText.trim()];

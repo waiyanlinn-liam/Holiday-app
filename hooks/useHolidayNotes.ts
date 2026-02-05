@@ -1,26 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
-// Change this line: remove name and desc from the arguments here
+/**
+ * Custom hook to manage holiday-specific notes using AsyncStorage.
+ * Handles state hydration, persistence of note arrays, and metadata
+ * (name/description) associated with a specific holiday ID.
+ */
 export const useHolidayNotes = (holidayId: string) => {
   const [notes, setNotes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Dynamic keys to isolate storage data per holiday
   const storageKey = `@note_${holidayId}`;
   const nameKey = `@note_name_${holidayId}`;
   const descKey = `@note_desc_${holidayId}`;
 
   useEffect(() => {
+    /**
+     * Initial Load: Fetches notes from local storage on mount
+     * or whenever the holidayId changes.
+     */
     const loadNotes = async () => {
       setIsLoading(true);
       try {
         const savedData = await AsyncStorage.getItem(storageKey);
-        if (savedData !== null) {
-          setNotes(JSON.parse(savedData));
-        } else {
-          setNotes([]);
-        }
+        setNotes(savedData !== null ? JSON.parse(savedData) : []);
       } catch (e) {
         setNotes([]);
       } finally {
@@ -30,7 +35,10 @@ export const useHolidayNotes = (holidayId: string) => {
     loadNotes();
   }, [holidayId]);
 
-  // Keep the 3 arguments HERE, in the save function
+  /**
+   * Persistence Layer: Atomically saves notes and holiday metadata.
+   * Uses multiSet to ensure data consistency across multiple keys.
+   */
   const saveNotes = async (
     newNotesArray: string[],
     holidayName: string,
@@ -47,6 +55,7 @@ export const useHolidayNotes = (holidayId: string) => {
     } catch (e) {
       console.error("Failed to save notes", e);
     } finally {
+      // Small delay to prevent UI flickering during rapid save operations
       setTimeout(() => setIsSaving(false), 400);
     }
   };

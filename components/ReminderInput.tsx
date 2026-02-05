@@ -196,7 +196,6 @@ const styles = StyleSheet.create({
   },
   changeTimeText: { fontSize: 13, fontWeight: "700", color: "#007AFF" },
 
-  // Body Message Styles
   bodyCard: { padding: 16, borderRadius: 20, marginBottom: 24 },
   bodyInput: {
     fontSize: 16,

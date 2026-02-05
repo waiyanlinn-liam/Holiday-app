@@ -2,11 +2,8 @@ import holidayData from "@/assets/holidays.json";
 import { GlassCard } from "@/components/GlassCard";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import { Dimensions, SectionList, StyleSheet, Text, View } from "react-native";
+import { SectionList, StyleSheet, Text, View } from "react-native";
 
-const { width } = Dimensions.get("window");
-
-// Types remain the same as your original code
 interface Holiday {
   name: string;
   description: string;
@@ -22,11 +19,18 @@ interface HolidaySection {
   holidayCount: number;
 }
 
+/**
+ * HolidayList Component:
+ * The primary entry point for browsing upcoming events.
+ * Features a high-performance SectionList with hero-item highlighting.
+ */
 export default function HolidayList() {
   const router = useRouter();
 
+  // Data Processing Pipeline:Filters out past events, Sorts by date,  Groups by "YYYY-MM
   const holidaySections = useMemo(() => {
     const today = new Date();
+
     const upcoming = holidayData.response.holidays
       .filter((h) => new Date(h.date.iso) >= today)
       .sort(
@@ -56,6 +60,10 @@ export default function HolidayList() {
       });
   }, []);
 
+  /**
+   * Section Header Renderer:
+   * Provides contextual grouping (Month/Year) and a summary count of events.
+   */
   const renderSectionHeader = ({ section }: { section: HolidaySection }) => (
     <View style={styles.sectionHeaderContainer}>
       <View style={styles.headerContent}>
@@ -72,6 +80,11 @@ export default function HolidayList() {
     </View>
   );
 
+  /**
+   * Item Renderer:
+   * Implements "Hero" logic for the single most imminent holiday.
+   * Encapsulates navigation logic and date formatting.
+   */
   const renderItem = ({
     item,
     section,
@@ -81,16 +94,19 @@ export default function HolidayList() {
     section: HolidaySection;
     index: number;
   }) => {
+    // isHero: True only for the very first item in the upcoming section list
     const isHero = section === holidaySections[0] && index === 0;
     const dateObj = new Date(item.date.iso);
 
+    // Composite ID used for deep-linking and state isolation in detail views
     const combinedId = `${item.date.iso}|${item.urlid}`;
+
     const handlePress = () => {
       router.push({
         pathname: "/details/[id]",
         params: {
           id: encodeURIComponent(combinedId),
-          name: item.name, // Now it looks like "2026-02-12-union-day..."          name: item.name,
+          name: item.name,
           desc: item.description,
         },
       });
@@ -103,6 +119,7 @@ export default function HolidayList() {
         onPress={handlePress}
       >
         <View style={styles.cardLayout}>
+          {/* Calendar-style Date Indicator */}
           <View style={[styles.datePill, isHero && styles.heroDatePill]}>
             <Text style={[styles.dayText, isHero && styles.heroDayText]}>
               {dateObj.getDate()}
@@ -114,6 +131,7 @@ export default function HolidayList() {
             </Text>
           </View>
 
+          {/* Holiday Information Content */}
           <View style={styles.infoContent}>
             {isHero && (
               <Text style={styles.upNextLabel}>UPCOMING CELEBRATION</Text>
@@ -129,12 +147,6 @@ export default function HolidayList() {
             </Text>
           </View>
         </View>
-
-        {/* {isHero && item.description && (
-          <Text style={styles.heroDesc} numberOfLines={3}>
-            {item.description}
-          </Text>
-        )} */}
       </GlassCard>
     );
   };
@@ -145,7 +157,7 @@ export default function HolidayList() {
       keyExtractor={(item, index) => item.urlid + index}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
-      stickySectionHeadersEnabled={false}
+      stickySectionHeadersEnabled={false} // Maintains glass effect visibility during scroll
       contentContainerStyle={styles.listContainer}
       showsVerticalScrollIndicator={false}
     />
@@ -155,7 +167,6 @@ export default function HolidayList() {
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 20,
-    // Adjusting for your MaskedView locations [0.05, 0.15, 0.82, 0.91]
     paddingTop: 100,
     paddingBottom: 150,
   },
@@ -171,14 +182,14 @@ const styles = StyleSheet.create({
   sectionMonth: {
     fontSize: 42,
     fontWeight: "900",
-    color: "#FFFFFF", // High contrast for the background
+    color: "#FFFFFF",
     letterSpacing: -1,
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   yearBadge: {
-    backgroundColor: "rgb(48, 100, 255)", // Bright pop of color
+    backgroundColor: "rgb(48, 100, 255)",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,

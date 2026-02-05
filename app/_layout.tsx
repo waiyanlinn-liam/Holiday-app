@@ -6,7 +6,6 @@ export default function RootLayout() {
   useEffect(() => {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
-        // removed shouldShowAlert to fix the warning
         shouldShowBanner: true,
         shouldShowList: true,
         shouldPlaySound: true,
@@ -16,10 +15,8 @@ export default function RootLayout() {
   }, []);
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* The Tabs Group */}
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-      {/* The Detail Page - "modal" makes it slide up on iOS */}
       <Stack.Screen
         name="details"
         options={{

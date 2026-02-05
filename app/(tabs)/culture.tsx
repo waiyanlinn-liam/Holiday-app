@@ -1,155 +1,17 @@
 import { GlassCard } from "@/components/GlassCard";
+import { HOLIDAYS_2026 } from "@/constants/HolidayCard";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
-
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-// Mapped from your JSON data
-const HOLIDAYS_2026 = [
-  {
-    month: "JANUARY",
-    name: "New Year Break",
-    dates: "Jan 1 - 4",
-    days: 4,
-    icon: "sparkles",
-    color: "#FF9F0A",
-    vibe: "FRESH STARTS",
-    spiritIcon: "rocket",
-  },
-  {
-    month: "FEBRUARY",
-    name: "Union Day",
-    dates: "Feb 12 - 13",
-    days: 2,
-    icon: "people",
-    color: "#FF453A",
-    vibe: "UNITY & PRIDE",
-    spiritIcon: "heart",
-  },
-  {
-    month: "FEBRUARY",
-    name: "Chinese New Year",
-    dates: "Feb 16 - 17",
-    days: 2,
-    icon: "moon-outline",
-    color: "#FF375F",
-    vibe: "LUNAR CELEBRATION",
-    spiritIcon: "star",
-  },
-  {
-    month: "MARCH",
-    name: "Peasants' Day",
-    dates: "Mar 2",
-    days: 1,
-    icon: "leaf",
-    color: "#32D74B",
-    vibe: "HARVEST ENERGY",
-    spiritIcon: "leaf",
-  },
-  {
-    month: "MARCH",
-    name: "Armed Forces' Day",
-    dates: "Mar 27",
-    days: 1,
-    icon: "shield-checkmark",
-    color: "#8E8E93",
-    vibe: "HONOR & DUTY",
-    spiritIcon: "medal",
-  },
-  {
-    month: "APRIL",
-    name: "Thingyan Festival",
-    dates: "Apr 11 - 19",
-    days: 9,
-    icon: "water",
-    color: "#007AFF",
-    vibe: "PURE CELEBRATION",
-    spiritIcon: "rainy",
-  },
-  {
-    month: "APRIL",
-    name: "Full Moon Kasong",
-    dates: "Apr 30",
-    days: 1,
-    icon: "sunny",
-    color: "#FFD60A",
-    vibe: "SPIRITUAL LIGHT",
-    spiritIcon: "flower",
-  },
-  {
-    month: "MAY",
-    name: "Labor Day",
-    dates: "May 1",
-    days: 1,
-    icon: "hammer",
-    color: "#FF9F0A",
-    vibe: "WORKER'S PRIDE",
-    spiritIcon: "construct",
-  },
-  {
-    month: "JULY",
-    name: "Martyrs' Day",
-    dates: "July 19",
-    days: 1,
-    icon: "ribbon",
-    color: "#FF453A",
-    vibe: "REMEMBRANCE",
-    spiritIcon: "flag",
-  },
-  {
-    month: "JULY",
-    name: "Full Moon Waso",
-    dates: "July 29",
-    days: 1,
-    icon: "book",
-    color: "#AF52DE",
-    vibe: "BUDDHIST LENT",
-    spiritIcon: "infinite",
-  },
-  {
-    month: "OCTOBER",
-    name: "Thadingyut",
-    dates: "Oct 25 - 27",
-    days: 3,
-    icon: "flame",
-    color: "#FF375F",
-    vibe: "LIGHT FESTIVAL",
-    spiritIcon: "moon",
-  },
-  {
-    month: "NOVEMBER",
-    name: "Tazaungmone",
-    dates: "Nov 23 - 24",
-    days: 2,
-    icon: "balloon",
-    color: "#BF5AF2",
-    vibe: "BALLOON MAGIC",
-    spiritIcon: "star",
-  },
-  {
-    month: "DECEMBER",
-    name: "National Day",
-    dates: "Dec 4",
-    days: 1,
-    icon: "flag",
-    color: "#007AFF",
-    vibe: "NATIONAL UNITY",
-    spiritIcon: "people",
-  },
-  {
-    month: "DECEMBER",
-    name: "Christmas Day",
-    dates: "Dec 25",
-    days: 1,
-    icon: "gift",
-    color: "#FF453A",
-    vibe: "JOY & GIVING",
-    spiritIcon: "gift",
-  },
-];
-
+/**
+ * CultureScreen:
+ * A specialized horizontal carousel showcasing Myanmar's cultural public holidays for 2026.
+ * It uses paging logic to provide a focused "One Card at a Time" user experience.
+ */
 export default function CultureScreen() {
+  // Maps holiday names to descriptive 'vibe' suffixes
   const getVibeSuffix = (name: string) => {
     if (name.includes("Thingyan")) return "of water & joy";
     if (name.includes("New Year")) return "of fresh potential";
@@ -161,6 +23,7 @@ export default function CultureScreen() {
 
   return (
     <View style={styles.screen}>
+      {/* --- Page Header --- */}
       <View style={styles.headerContainer}>
         <Text style={styles.header}>2026</Text>
         <View style={styles.subHeaderRow}>
@@ -168,23 +31,29 @@ export default function CultureScreen() {
         </View>
       </View>
 
+      {/* --- Horizontal Carousel Section --- 
+          snapToInterval: Locks the scroll to the width of the cards + margin.
+      */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToAlignment="center"
-        snapToInterval={SCREEN_WIDTH * 0.85}
+        snapToInterval={SCREEN_WIDTH * 0.85} // Matches card width + horizontal spacing
         decelerationRate="fast"
         contentContainerStyle={styles.horizontalContainer}
       >
         {HOLIDAYS_2026.map((item, index) => (
           <View key={index} style={styles.cardWrapper}>
+            {/* Temporal Marker (The Month) */}
             <View style={styles.monthLabelContainer}>
               <Text style={styles.monthLabel}>{item.month}</Text>
             </View>
 
+            {/* Cultural Information Card */}
             <GlassCard style={styles.horizontalCard}>
               <View>
                 <View style={styles.cardHeader}>
+                  {/* Dynamic Color Palette based on Holiday Type */}
                   <View
                     style={[styles.iconCircle, { backgroundColor: item.color }]}
                   >
@@ -203,11 +72,13 @@ export default function CultureScreen() {
                 <Text style={styles.dates}>{item.dates}</Text>
               </View>
 
+              {/* --- Data Visualization Footer --- */}
               <View>
                 <View style={styles.divider} />
                 <View style={styles.footerRow}>
                   <View>
                     <Text style={styles.metaTitle}>HOLIDAY VIBE</Text>
+                    {/* Spirit Rating: Visualizes holiday duration/intensity using icons */}
                     <View style={styles.spiritContainer}>
                       {[1, 2, 3, 4, 5].map((step) => (
                         <Ionicons
@@ -223,6 +94,8 @@ export default function CultureScreen() {
                       ))}
                     </View>
                   </View>
+
+                  {/* Duration Badge */}
                   <View
                     style={[
                       styles.daysCircle,
@@ -233,6 +106,8 @@ export default function CultureScreen() {
                     <Text style={styles.daysText}>DAYS</Text>
                   </View>
                 </View>
+
+                {/* Contextual Vibe Text */}
                 <Text style={[styles.durationNote, { color: item.color }]}>
                   {getVibeSuffix(item.name)}
                 </Text>
@@ -309,7 +184,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
-    alignSelf: "stretch", // 🔒 force stretch
+    alignSelf: "stretch",
   },
 
   cardHeader: {

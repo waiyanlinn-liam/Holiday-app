@@ -37,7 +37,7 @@ export function CustomTabBar() {
           <TabTrigger name="index" asChild>
             <TabButton icon="home" onPress={() => handlePress(0)} />
           </TabTrigger>
-          <TabTrigger name="leave" asChild>
+          <TabTrigger name="culture" asChild>
             <TabButton icon="happy" onPress={() => handlePress(1)} />
           </TabTrigger>
 

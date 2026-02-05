@@ -15,7 +15,7 @@ export default function RootLayout() {
         const { status: newStatus } =
           await Notifications.requestPermissionsAsync();
         if (newStatus !== "granted") {
-          console.warn("Notification permissions not granted!");
+          //do something if not granted
         }
       }
     };
@@ -46,6 +46,7 @@ export default function RootLayout() {
         >
           <TabSlot />
         </MaskedView>
+
         {/* Bottom edge blur mask for the Tab Bar area */}
         <View style={styles.bottomEdgeContainer} pointerEvents="none">
           <MaskedView
@@ -67,7 +68,7 @@ export default function RootLayout() {
 
         <TabList style={{ display: "none" }}>
           <TabTrigger name="index" href="/" />
-          <TabTrigger name="leave" href="/leave" />
+          <TabTrigger name="culture" href="/culture" />
           <TabTrigger name="calendar" href="/calendar" />
           <TabTrigger name="reminder" href="/reminder" />
         </TabList>

@@ -13,14 +13,21 @@ import {
 } from "react-native";
 
 import { NoteInput } from "@/components/NoteInput";
-import { ReminderSection } from "@/components/Reminder";
+import { ReminderSection } from "@/components/ReminderInput";
 import { useHolidayNotes } from "@/hooks/useHolidayNotes";
 import { useHolidayReminder } from "@/hooks/useHolidayReminder";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
+/**
+ * HolidayDetailScreen:
+ * A comprehensive view for managing holiday-specific metadata.
+ * Features: Local Notification scheduling, persistence via AsyncStorage, and dynamic UI adjustments for keyboard interactions.
+ */
+
 export default function HolidayDetailScreen() {
+  // --- 1. ROUTING & INITIALIZATION ---
   const { id, name, desc } = useLocalSearchParams();
   const holidayId = decodeURIComponent(id as string);
   const scrollRef = useRef<ScrollView>(null);
@@ -28,14 +35,17 @@ export default function HolidayDetailScreen() {
   const holidayName = (name as string) || "Holiday";
   const holidayDescription = (desc as string) || "";
 
+  // Parse the holidayId (usually formatted as YYYY-MM-DD|name) for the date display
   const dateString = holidayId.split("|")[0];
   const dateObj = new Date(dateString);
   const isValidDate = !isNaN(dateObj.getTime());
 
+  // --- 2. LOCAL STATE ---
   const [isKeyboardActive, setIsKeyboardActive] = useState(false);
   const [reminderBody, setReminderBody] = useState("");
   const [isReminderVisible, setIsReminderVisible] = useState(false);
 
+  // --- 3. CUSTOM HOOKS (Business Logic) ---
   const { notes = [], saveNotes, isSaving } = useHolidayNotes(holidayId);
   const {
     reminderId,
@@ -47,40 +57,42 @@ export default function HolidayDetailScreen() {
     deleteReminder,
   } = useHolidayReminder(holidayId, holidayName);
 
+  /**
+   * DATA RECONCILIATION:
+   * Syncs the local state with persisted storage whenever a reminder exists.
+   * Cleans hidden characters from time strings to ensure Date object validity.
+   */
   useEffect(() => {
     const syncReminderData = async () => {
       const bodyKey = `@reminder_body_${holidayId}`;
       const timeKey = `@reminder_time_${holidayId}`;
 
-      const values = await AsyncStorage.multiGet([bodyKey, timeKey]);
-      const savedBody = values[0][1];
-      const savedTimeStr = values[1][1];
+      try {
+        const values = await AsyncStorage.multiGet([bodyKey, timeKey]);
+        const savedBody = values[0][1];
+        const savedTimeStr = values[1][1];
 
-      if (savedBody) setReminderBody(savedBody);
+        if (savedBody) setReminderBody(savedBody);
 
-      if (savedTimeStr) {
-        try {
-          // 1. Clean the string (removes special hidden characters like the one in your log)
+        if (savedTimeStr) {
+          // Sanitize string (removes zero-width spaces or unexpected whitespace)
           const cleanTime = savedTimeStr.replace(/\s+/g, " ").trim();
-
-          // 2. Split into parts (e.g., ["5:43", "AM"])
           const [time, modifier] = cleanTime.split(" ");
           let [hours, minutes] = time.split(":").map(Number);
 
-          // 3. Convert 12h format to 24h for the Date object
+          // Convert 12h AM/PM to 24h for Javascript Date synchronization
           if (modifier?.toUpperCase() === "PM" && hours < 12) hours += 12;
           if (modifier?.toUpperCase() === "AM" && hours === 12) hours = 0;
 
           const newDate = new Date();
           newDate.setHours(hours, minutes, 0, 0);
 
-          // Check if it's a valid date before setting
           if (!isNaN(newDate.getTime())) {
             setSelectedTime(newDate);
           }
-        } catch (e) {
-          console.error("Error parsing saved time string:", e);
         }
+      } catch (e) {
+        console.error("AsyncStorage Sync Error:", e);
       }
     };
 
@@ -88,7 +100,11 @@ export default function HolidayDetailScreen() {
       syncReminderData();
     }
   }, [holidayId, reminderId]);
-  // Keyboard Listeners
+
+  /**
+   * KEYBOARD ADAPTABILITY:
+   * Dynamically adjusts ScrollView padding to keep inputs visible on mobile.
+   */
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -116,6 +132,7 @@ export default function HolidayDetailScreen() {
 
   return (
     <View style={styles.mainContainer}>
+      {/* HEADER CONFIGURATION */}
       <Stack.Screen
         options={{
           headerTitle: "Back",
@@ -137,6 +154,7 @@ export default function HolidayDetailScreen() {
           ),
         }}
       />
+
       <ScrollView
         ref={scrollRef}
         style={{ backgroundColor: "transparent" }}
@@ -145,12 +163,11 @@ export default function HolidayDetailScreen() {
           styles.scrollContent,
           { paddingBottom: isKeyboardActive ? 350 : 80 },
         ]}
-        removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
+          {/* HERO CARD: Holiday Identity */}
           <GlassCard style={styles.heroCard} hero={true}>
-            {/* ... GlassCard Content ... */}
             <View style={styles.heroHeader}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.categoryText}>HOLIDAY INFO</Text>
@@ -170,6 +187,7 @@ export default function HolidayDetailScreen() {
             <Text style={styles.description}>{holidayDescription}</Text>
           </GlassCard>
 
+          {/* NOTE SECTION */}
           <NoteInput
             notes={notes}
             isSaving={isSaving}
@@ -178,20 +196,16 @@ export default function HolidayDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* THE "VANISHING" SHIELD */}
+      {/* UI SHIELD: Prevents text-bleed under the header during scroll */}
       <View style={styles.topFadeContainer} pointerEvents="none">
         <LinearGradient
-          // Color 1: at the very top of the blurred image
-          // Color 2: Keeping it solid to create the "Shield"
-          // Color 3: Transitioning to transparent
           colors={["#935dac", "#b956ca", "transparent"]}
-          // 0.0 to 0.7: Solid Shield (Text is 100% hidden)
-          // 0.7 to 1.0: Smooth fade out
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
       </View>
 
+      {/* REMINDER MANAGEMENT MODAL */}
       <Modal
         visible={isReminderVisible}
         animationType="slide"
@@ -238,17 +252,14 @@ const styles = StyleSheet.create({
   mainContainer: { flex: 1, backgroundColor: "transparent" },
   scrollContent: { paddingTop: 110 },
   content: { paddingHorizontal: 20 },
-  // THE MAGIC SECTION
   topFadeContainer: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 140, // Should match scrollContent paddingTop
-    zIndex: 10, // Ensures it stays above the ScrollView
+    height: 140,
+    zIndex: 10,
   },
-
-  // Navigation
   navIcon: {
     marginRight: 16,
     padding: 8,
@@ -275,8 +286,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: "800", color: "#1A1A1B" },
   description: { fontSize: 15, color: "#333", lineHeight: 22, marginTop: 10 },
-
-  // Badge Styles
   dateBadge: {
     backgroundColor: "#007AFF",
     paddingHorizontal: 12,
@@ -300,7 +309,6 @@ const styles = StyleSheet.create({
     color: "#d3d5d7",
     marginTop: 2,
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",

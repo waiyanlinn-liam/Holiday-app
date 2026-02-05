@@ -19,9 +19,7 @@ export default function DetailsLayout() {
           headerTransparent: true,
           headerTintColor: "#1A1A1B",
           headerTitleStyle: { fontWeight: "700" },
-          // Force transparency on the stack container
           contentStyle: { backgroundColor: "transparent" },
-          // Change animation to fade to hide background "pops"
           animation: Platform.OS === "ios" ? "default" : "fade",
         }}
       >

@@ -7,8 +7,8 @@ interface Props {
   children: any;
   style?: any;
   isInteractive?: boolean;
-  hero?: boolean; // Optional visual boost
-  onPress?: () => void; // <--- Add this
+  hero?: boolean; // visual boost
+  onPress?: () => void;
 }
 
 export const GlassCard = ({
@@ -34,7 +34,6 @@ export const GlassCard = ({
   // Hero cards are brighter on purpose
   const opacity = hero ? 0.48 : 0.4;
 
-  // iOS Liquid Glass (iOS 18+)
   if (isLiquidGlassAvailable()) {
     return (
       <GlassView
@@ -51,7 +50,6 @@ export const GlassCard = ({
     );
   }
 
-  // Fallback (Android + older iOS)
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
@@ -89,7 +87,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.4)",
   },
   fallbackOverlay: {
-    padding: 18, // Slight increase for premium spacing
+    padding: 18,
     borderRadius: 16,
   },
   glowEffect: {

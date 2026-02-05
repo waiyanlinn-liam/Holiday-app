@@ -7,30 +7,36 @@ import { Calendar } from "react-native-calendars";
 
 const { width } = Dimensions.get("window");
 
-export default function RemindScreen() {
+/**
+ * Calendar Screen Component:
+ * Provides a high-level calendar overview of the year's holidays.
+ * Users can tap specific dates to jump to detailed planning views.
+ */
+export default function CalendarScreen() {
+  //Performance Optimization: useMemo
   const markedDates = useMemo(() => {
     const marks: any = {};
 
-    // 1. Mark Holidays (Gold)
+    // 1. Data Mapping: Mark Holidays (Gold)
     holidayData.response.holidays.forEach((holiday) => {
       marks[holiday.date.iso] = {
         selected: true,
-        selectedColor: "#FFD700", // Gold
+        selectedColor: "#FFD700", // Aesthetic choice: Gold for celebrations
         selectedTextColor: "#000000",
-        marked: true,
-        dotColor: "#FF3B30",
+        marked: true, // Shows the small dot below the number
+        dotColor: "#FF3B30", // Red dot to indicate a 'pinned' event
       };
     });
 
-    // 2. Mark Today (Blue Circle)
+    // 2. Contextual Awareness: Mark Today (Blue Circle)
+    // We get the current system date to help the user orient themselves.
     const today = new Date().toISOString().split("T")[0];
 
-    // If today is ALSO a holiday, you might want to decide which color wins.
-    // Here, we let the Blue Today circle override or merge:
+    // If today is a holiday, we merge the holiday dot with the "Current Day" blue circle.
     marks[today] = {
-      ...marks[today], // Keep the holiday dot if it exists
+      ...marks[today],
       selected: true,
-      selectedColor: "#007AFF", // Bright Blue circle
+      selectedColor: "#007AFF",
       selectedTextColor: "#FFFFFF",
     };
 
@@ -39,13 +45,17 @@ export default function RemindScreen() {
 
   return (
     <View style={styles.container}>
+      {/* UI Layout: 
+         Wrapping the calendar in GlassCard provides a modern, 
+         semi-transparent aesthetic consistent with the app's theme.
+      */}
       <GlassCard style={styles.glassAdjust}>
         <Calendar
           hideExtraDays={false}
           enableSwipeMonths={true}
-          // Pass the memoized marks here
           markedDates={markedDates}
           theme={{
+            // Theming: Ensuring the calendar looks native to the app
             calendarBackground: "transparent",
             monthTextColor: "#007AFF",
             textMonthFontWeight: "800",
@@ -55,16 +65,20 @@ export default function RemindScreen() {
             dayTextColor: "#2C3E50",
             textDayFontWeight: "600",
             textDisabledColor: "rgba(0, 0, 0, 0.25)",
-            // We disable the default today text color so our
-            // blue "selected" circle is the primary focus
             todayTextColor: "#007AFF",
           }}
+          /**
+           * Interaction Handler:
+           * Checks if a tapped date is a known holiday.
+           * Redirects to the detail view with pre-filled holiday info or a blank state.
+           */
           onDayPress={(day) => {
             const selectedHoliday = holidayData.response.holidays.find(
               (h) => h.date.iso === day.dateString,
             );
 
             if (selectedHoliday) {
+              // Deep Link to Holiday Details
               const combinedId = `${selectedHoliday.date.iso}|${selectedHoliday.urlid}`;
               router.push({
                 pathname: "/details/[id]",
@@ -75,6 +89,7 @@ export default function RemindScreen() {
                 },
               });
             } else {
+              // Standard Date Navigation (No specific holiday)
               router.push({
                 pathname: "/details/[id]",
                 params: {
@@ -98,7 +113,7 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
   glassAdjust: {
-    width: width * 0.95,
+    width: width * 0.95, // Dynamic width for cross-device compatibility
     padding: 10,
     borderRadius: 20,
   },

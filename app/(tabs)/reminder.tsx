@@ -1,4 +1,5 @@
 import { GlassCard } from "@/components/GlassCard";
+import { ListItem, NoteItem, ReminderItem } from "@/types/reminder"; // Adjust path as needed
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
@@ -13,27 +14,11 @@ import {
   View,
 } from "react-native";
 
-// --- INTERFACES ---
-
-interface ReminderItem {
-  holidayId: string;
-  body: string;
-  type: "reminder";
-  scheduledTime: string;
-  name: string;
-  description: string;
-}
-
-interface NoteItem {
-  holidayId: string;
-  items: string[];
-  type: "note";
-  name: string;
-  description: string;
-}
-
-type ListItem = ReminderItem | NoteItem;
-
+/**
+ * ReminderListScreen:
+ * Serves as the central repository for all user-generated content.
+ * Efficiently parses AsyncStorage keys to reconstruct complex objects.
+ */
 export default function ReminderListScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"reminders" | "notes">(
@@ -43,22 +28,19 @@ export default function ReminderListScreen() {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // --- DATA FETCHING ---
-
+  //Data Aggregation Logic:
+  //Retrieve all keys. Filter for 'Master Keys' (the primary IDs).Batch-fetch metadata (names, times, bodies) for each ID.
   const fetchData = async () => {
     try {
       setLoading(true);
       const keys = await AsyncStorage.getAllKeys();
 
-      // 1. Fetch Reminders
-      // Filter for master keys: @reminder_YYYY-MM-DD-name
+      // --- 1. Reminder Reconstruction ---
+      // We filter out metadata keys to find only the unique reminder IDs.
       const reminderKeys = keys.filter(
         (k) =>
           k.startsWith("@reminder_") &&
-          !k.includes("_body") &&
-          !k.includes("_time") &&
-          !k.includes("_name") &&
-          !k.includes("_desc"),
+          !["_body", "_time", "_name", "_desc"].some((sub) => k.includes(sub)),
       );
 
       const reminderData: ReminderItem[] = await Promise.all(
@@ -76,16 +58,13 @@ export default function ReminderListScreen() {
             body: body || "Check your plans!",
             scheduledTime: time || "Scheduled",
             type: "reminder",
-            name:
-              savedName ||
-              holidayId.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " "),
+            name: savedName || holidayId.replace(/-/g, " "),
             description: savedDesc || body || "No description",
           };
         }),
       );
 
-      // 2. Fetch Notes
-      // Filter for master keys: @note_YYYY-MM-DD-name
+      // --- 2. Note Reconstruction ---
       const noteKeys = keys.filter(
         (k) =>
           k.startsWith("@note_") &&
@@ -108,9 +87,7 @@ export default function ReminderListScreen() {
             holidayId,
             items: parsedNotes,
             type: "note",
-            name:
-              savedName ||
-              holidayId.replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " "),
+            name: savedName || holidayId.replace(/-/g, " "),
             description:
               savedDesc || (parsedNotes.length > 0 ? parsedNotes[0] : ""),
           };
@@ -120,20 +97,28 @@ export default function ReminderListScreen() {
       setReminders(reminderData);
       setNotes(noteData.filter((n) => n.items.length > 0));
     } catch (e) {
-      console.error("Error fetching data:", e);
+      console.error("Data Fetch Error:", e);
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Navigation Lifecycle:
+   * useFocusEffect ensures the list refreshes every time the user navigates back
+   * to this screen (e.g., after deleting a note in the Details screen).
+   */
   useFocusEffect(
     useCallback(() => {
       fetchData();
     }, []),
   );
 
-  // --- ACTIONS ---
-
+  /**
+   * Cleanup Logic:
+   * Multi-key deletion ensures no 'ghost' data remains in AsyncStorage.
+   * For reminders, we also interface with the hardware-level Notification center.
+   */
   const deleteItem = async (holidayId: string, type: "reminder" | "note") => {
     try {
       if (type === "reminder") {
@@ -155,15 +140,14 @@ export default function ReminderListScreen() {
           `@note_desc_${holidayId}`,
         ]);
       }
-      fetchData();
+      fetchData(); // UI Refresh
     } catch (e) {
-      console.error("Error deleting item:", e);
+      console.error("Deletion Error:", e);
     }
   };
 
   const formatDate = (id: string) => {
     const parts = id.split("-");
-
     if (parts.length < 3) return "Holiday";
     const date = new Date(
       parseInt(parts[0]),
@@ -173,28 +157,25 @@ export default function ReminderListScreen() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  // --- RENDER ---
-
   const renderItem = ({ item }: { item: ListItem }) => {
     const isNote = item.type === "note";
     const displayDate = formatDate(item.holidayId);
 
-    const handlePress = () => {
-      console.log(item.name);
-      console.log(item.description);
-      router.push({
-        pathname: "/details/[id]",
-        params: {
-          id: item.holidayId,
-          name: item.name,
-          desc: item.description,
-        },
-      });
-    };
-
     return (
       <View style={styles.cardWrapper}>
-        <GlassCard onPress={handlePress} hero={false} style={styles.card}>
+        <GlassCard
+          onPress={() =>
+            router.push({
+              pathname: "/details/[id]",
+              params: {
+                id: item.holidayId,
+                name: item.name,
+                desc: item.description,
+              },
+            })
+          }
+          style={styles.card}
+        >
           <View style={styles.cardContent}>
             {/* LEFT: Date Badge */}
             <View style={styles.dateBadge}>
@@ -202,7 +183,7 @@ export default function ReminderListScreen() {
               <Text style={styles.dayText}>{displayDate.split(" ")[1]}</Text>
             </View>
 
-            {/* MIDDLE: Information */}
+            {/* MIDDLE: Info + Body Preview */}
             <View style={styles.info}>
               <Text style={styles.holidayTitle} numberOfLines={1}>
                 {item.name}
@@ -210,6 +191,7 @@ export default function ReminderListScreen() {
 
               {isNote ? (
                 <View>
+                  {/* Re-added the note preview text */}
                   <Text style={styles.previewText} numberOfLines={1}>
                     {(item as NoteItem).items[0]}
                   </Text>
@@ -222,6 +204,7 @@ export default function ReminderListScreen() {
                 </View>
               ) : (
                 <View>
+                  {/* Re-added the reminder body text */}
                   <Text style={styles.previewText} numberOfLines={1}>
                     {(item as ReminderItem).body}
                   </Text>
@@ -249,37 +232,27 @@ export default function ReminderListScreen() {
       </View>
     );
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.contentWrapper}>
+        {/* Segemented Control: For switching between data types */}
         <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "reminders" && styles.activeTab]}
-            onPress={() => setActiveTab("reminders")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "reminders" && styles.activeTabText,
-              ]}
+          {(["reminders", "notes"] as const).map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              onPress={() => setActiveTab(tab)}
             >
-              Reminders
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "notes" && styles.activeTab]}
-            onPress={() => setActiveTab("notes")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "notes" && styles.activeTabText,
-              ]}
-            >
-              Notes
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab && styles.activeTabText,
+                ]}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {loading ? (
@@ -294,7 +267,6 @@ export default function ReminderListScreen() {
             keyExtractor={(item) => `${item.type}_${item.holidayId}`}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <Text style={styles.emptyText}>Nothing scheduled yet</Text>
             }

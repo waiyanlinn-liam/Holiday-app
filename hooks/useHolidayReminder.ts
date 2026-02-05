@@ -3,6 +3,10 @@ import * as Notifications from "expo-notifications";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
+/**
+ * Custom hook for managing Expo Notifications and reminder metadata.
+ * Calculates trigger times based on holiday dates and manages local notification IDs.
+ */
 export const useHolidayReminder = (holidayId: string, name: string) => {
   const [reminderId, setReminderId] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState(new Date());
@@ -15,28 +19,29 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
   const descKey = `@reminder_desc_${holidayId}`;
 
   useEffect(() => {
+    // Sync internal state with persisted notification ID on initialization
     (async () => {
       const saved = await AsyncStorage.getItem(reminderKey);
-      if (saved) {
-        console.log(
-          `[Init] Found existing reminder for ${holidayId}: ${saved}`,
-        );
-        setReminderId(saved);
-      }
+      if (saved) setReminderId(saved);
     })();
   }, [holidayId]);
 
+  /**
+   * Scheduling Logic:
+   * 1. Cancels any existing notification for this holiday to avoid overlaps.
+   * 2. Calculates the delta in seconds between 'now' and the holiday date.
+   * 3. Schedules a TIME_INTERVAL trigger via expo-notifications.
+   */
   const scheduleHolidayReminder = async (
     bodyContent: string,
     holidayDesc: string,
   ) => {
-    console.log("--- Starting Schedule Process ---");
     try {
       if (reminderId) {
-        console.log(`[1] Cancelling previous notification: ${reminderId}`);
         await Notifications.cancelScheduledNotificationAsync(reminderId);
       }
 
+      // Parse holidayId (YYYY-MM-DD) to construct target Date object
       const [year, month, day] = holidayId.split("-").map(Number);
       const targetDate = new Date(
         year,
@@ -47,20 +52,16 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         0,
       );
 
-      console.log(`[2] Target Date Constructed: ${targetDate.toString()}`);
-
       const secondsUntilHoliday = Math.floor(
         (targetDate.getTime() - Date.now()) / 1000,
       );
 
-      console.log(`[3] Seconds until trigger: ${secondsUntilHoliday}`);
-
+      // Validate that the reminder isn't being set for a past date
       if (secondsUntilHoliday <= 0) {
         Alert.alert("Time Error", "The selected time is in the past!");
         return;
       }
 
-      console.log("[4] Requesting notification schedule...");
       const newId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `📅 ${name} Reminder`,
@@ -74,14 +75,12 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
         },
       });
 
-      console.log(`[5] Notification scheduled successfully. ID: ${newId}`);
-
       const timeString = selectedTime.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       });
 
-      console.log("[6] Saving metadata to AsyncStorage...");
+      // Update storage with reminder details for UI display and future management
       await AsyncStorage.multiSet([
         [reminderKey, newId],
         [bodyKey, bodyContent],
@@ -92,16 +91,18 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
 
       setReminderId(newId);
       setShowPicker(false);
-      console.log("--- Schedule Process Complete ---");
       Alert.alert("Reminder Set", `Notification scheduled for ${timeString}`);
     } catch (e: any) {
       Alert.alert("Error", "Could not schedule reminder.");
     }
   };
 
+  /**
+   * Teardown Logic: Cancels the scheduled notification and purges
+   * all related metadata from AsyncStorage.
+   */
   const deleteReminder = async () => {
     if (reminderId) {
-      console.log(`[Delete] Removing reminder: ${reminderId}`);
       try {
         await Notifications.cancelScheduledNotificationAsync(reminderId);
         await AsyncStorage.multiRemove([
@@ -112,7 +113,6 @@ export const useHolidayReminder = (holidayId: string, name: string) => {
           descKey,
         ]);
         setReminderId(null);
-        console.log("[Delete] Cleanup complete.");
         Alert.alert("Removed", "Reminder deleted.");
       } catch (e) {
         console.error("[Delete Error]", e);
