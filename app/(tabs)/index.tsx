@@ -167,7 +167,7 @@ export default function HolidayList() {
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 20,
-    paddingTop: 100,
+    paddingTop: 40,
     paddingBottom: 150,
   },
   sectionHeaderContainer: {

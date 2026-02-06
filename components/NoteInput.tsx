@@ -132,7 +132,7 @@ export const NoteInput = ({
       {/* --- DELETE CONFIRMATION MODAL --- */}
       <Modal visible={indexToDelete !== null} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <GlassCard style={styles.confirmCard}>
+          <View style={styles.confirmCard}>
             <Ionicons
               name="alert-circle"
               size={40}
@@ -148,7 +148,7 @@ export const NoteInput = ({
                 style={[styles.confirmBtn, styles.cancelBtn]}
                 onPress={() => setIndexToDelete(null)}
               >
-                <Text style={styles.cancelBtnText}>Back</Text>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmBtn, styles.deleteBtn]}
@@ -157,7 +157,7 @@ export const NoteInput = ({
                 <Text style={styles.deleteBtnText}>Delete</Text>
               </TouchableOpacity>
             </View>
-          </GlassCard>
+          </View>
         </View>
       </Modal>
 
@@ -249,11 +249,12 @@ const styles = StyleSheet.create({
 
   // Modal & Confirmation Styles
   confirmCard: {
-    width: "100%",
+    width: "90%",
     padding: 25,
     borderRadius: 28,
-    backgroundColor: "#8b8989",
+    backgroundColor: "#faf2f2",
     alignItems: "center",
+    justifyContent: "center",
   },
   confirmSubText: {
     fontSize: 14,

@@ -295,7 +295,7 @@ export default function ReminderListScreen() {
             ? "Delete Reminder?"
             : "Delete Note?"
         }
-        message="This action cannot be undone. All data for this holiday will be removed."
+        message="This action cannot be undone."
       />
     </View>
   );

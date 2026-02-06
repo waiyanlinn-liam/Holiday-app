@@ -1,16 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {
-    Dimensions,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import { GlassCard } from "./GlassCard";
-
-const { width } = Dimensions.get("window");
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ConfirmDeleteModalProps {
   visible: boolean;
@@ -24,39 +14,40 @@ export const ConfirmDeleteModal = ({
   visible,
   onCancel,
   onConfirm,
-  title = "Remove Reminder?",
-  message = "This action cannot be undone.",
+  title = "Delete Note?",
+  message = "Are you sure you want to remove this plan?",
 }: ConfirmDeleteModalProps) => {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <GlassCard style={styles.confirmCard}>
-          <View style={styles.content}>
-            {/* Reduced size and margin here */}
-            <View style={styles.iconCircle}>
-              <Ionicons name="trash-outline" size={28} color="#ff4444" />
-            </View>
+        <View style={styles.confirmCard}>
+          {/* Icon matches the first snippet's style */}
+          <Ionicons
+            name="alert-circle"
+            size={40}
+            color="#FF3B30"
+            style={styles.icon}
+          />
 
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
 
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.btn, styles.cancelBtn]}
-                onPress={onCancel}
-              >
-                <Text style={styles.cancelText}>Back</Text>
-              </TouchableOpacity>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.btn, styles.cancelBtn]}
+              onPress={onCancel}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.btn, styles.deleteBtn]}
-                onPress={onConfirm}
-              >
-                <Text style={styles.deleteText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.btn, styles.deleteBtn]}
+              onPress={onConfirm}
+            >
+              <Text style={styles.deleteText}>Delete</Text>
+            </TouchableOpacity>
           </View>
-        </GlassCard>
+        </View>
       </View>
     </Modal>
   );
@@ -65,53 +56,47 @@ export const ConfirmDeleteModal = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)", // Darkened overlay
     justifyContent: "center",
     alignItems: "center",
   },
   confirmCard: {
-    width: width * 0.8, // Slightly narrower
-    maxWidth: 320,
-    borderRadius: 24, // Smoother corners for compact look
-    padding: 20, // Reduced from 24
-    backgroundColor: "#908e8e",
-    overflow: "hidden",
-  },
-  content: {
+    width: "85%", // Standard card width
+    padding: 25,
+    borderRadius: 20, // Clean, rounded corners
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  iconCircle: {
-    width: 50, // Reduced from 64
-    height: 50, // Reduced from 64
-    borderRadius: 25,
-    backgroundColor: "#fff0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12, // Reduced from 20
+  icon: {
+    marginBottom: 10,
   },
   title: {
-    fontSize: 19, // Slightly smaller
-    fontWeight: "800",
+    fontSize: 20,
+    fontWeight: "700",
     color: "#1C1C1E",
-    marginBottom: 6, // Reduced from 10
+    marginBottom: 8,
     textAlign: "center",
   },
   message: {
-    fontSize: 14,
-    color: "#444446",
+    fontSize: 15,
+    color: "#3A3A3C",
     textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 20, // Reduced from 28
-    paddingHorizontal: 5,
+    marginBottom: 24,
+    paddingHorizontal: 10,
   },
   buttonRow: {
     flexDirection: "row",
-    gap: 10,
     width: "100%",
+    gap: 12,
   },
   btn: {
     flex: 1,
-    paddingVertical: 12, // Reduced from 15
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
   },
@@ -123,12 +108,12 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: "#1C1C1E",
-    fontWeight: "700",
-    fontSize: 15,
+    fontWeight: "600",
+    fontSize: 16,
   },
   deleteText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
