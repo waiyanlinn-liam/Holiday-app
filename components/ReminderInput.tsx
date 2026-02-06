@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
 
   // Buttons
-  footer: { marginTop: 10 },
+  footer: { marginTop: 5, padding: 10, marginBottom: 10 },
   confirmBtn: {
     flexDirection: "row",
     padding: 18,
