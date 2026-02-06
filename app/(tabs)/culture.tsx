@@ -17,8 +17,6 @@ export default function CultureScreen() {
     if (name.includes("New Year")) return "of fresh potential";
     if (name.includes("Thadingyut") || name.includes("Tazaungmone"))
       return "of light & magic";
-    if (name.includes("Full Moon")) return "of spiritual reflection";
-    return "of cultural discovery";
   };
 
   return (
