@@ -7,7 +7,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 /**
  * CultureScreen:
- * A specialized horizontal carousel showcasing Myanmar's cultural public holidays for 2026.
+ * A specialized horizontal carousel showcasing Myanmar's cultural long public holidays for 2026.
  * It uses paging logic to provide a focused "One Card at a Time" user experience.
  */
 export default function CultureScreen() {

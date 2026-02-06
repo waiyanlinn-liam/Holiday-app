@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { GlassCard } from "./GlassCard";
@@ -27,6 +28,9 @@ export const NoteInput = ({
   const [inputText, setInputText] = useState("");
   const [editText, setEditText] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  // --- NEW STATE FOR DELETE CONFIRMATION ---
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const handleAdd = () => {
     if (inputText.trim().length === 0) return;
@@ -48,10 +52,14 @@ export const NoteInput = ({
     setEditText("");
   };
 
-  const deleteNote = (index: number) => {
-    const updatedNotes = notes.filter((_, i) => i !== index);
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    onUpdateNotes(updatedNotes);
+  // --- TRIGGERED AFTER USER CONFIRMS ---
+  const finalizeDelete = () => {
+    if (indexToDelete !== null) {
+      const updatedNotes = notes.filter((_, i) => i !== indexToDelete);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      onUpdateNotes(updatedNotes);
+      setIndexToDelete(null);
+    }
   };
 
   const startEdit = (index: number) => {
@@ -82,7 +90,7 @@ export const NoteInput = ({
                   <Ionicons name="pencil-sharp" size={16} color="#007AFF" />
                 </Pressable>
                 <Pressable
-                  onPress={() => deleteNote(index)}
+                  onPress={() => setIndexToDelete(index)} // <-- Trigger confirm
                   style={styles.iconBtn}
                 >
                   <Ionicons
@@ -120,6 +128,38 @@ export const NoteInput = ({
           </Pressable>
         </View>
       </GlassCard>
+
+      {/* --- DELETE CONFIRMATION MODAL --- */}
+      <Modal visible={indexToDelete !== null} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <GlassCard style={styles.confirmCard}>
+            <Ionicons
+              name="alert-circle"
+              size={40}
+              color="#FF3B30"
+              style={{ marginBottom: 10 }}
+            />
+            <Text style={styles.modalTitle}>Delete Note?</Text>
+            <Text style={styles.confirmSubText}>
+              Are you sure you want to remove this plan?
+            </Text>
+            <View style={styles.confirmActionRow}>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.cancelBtn]}
+                onPress={() => setIndexToDelete(null)}
+              >
+                <Text style={styles.cancelBtnText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.deleteBtn]}
+                onPress={finalizeDelete}
+              >
+                <Text style={styles.deleteBtnText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </GlassCard>
+        </View>
+      </Modal>
 
       {/* --- EDIT MODAL --- */}
       <KeyboardAvoidingView
@@ -206,6 +246,32 @@ const styles = StyleSheet.create({
   },
   actionRow: { flexDirection: "row" },
   iconBtn: { padding: 8, borderRadius: 10 },
+
+  // Modal & Confirmation Styles
+  confirmCard: {
+    width: "100%",
+    padding: 25,
+    borderRadius: 28,
+    backgroundColor: "#8b8989",
+    alignItems: "center",
+  },
+  confirmSubText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  confirmActionRow: { flexDirection: "row", gap: 10, width: "100%" },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelBtn: { backgroundColor: "#F2F2F7" },
+  deleteBtn: { backgroundColor: "#FF3B30" },
+  cancelBtnText: { color: "#1C1C1E", fontWeight: "600" },
+  deleteBtnText: { color: "#FFF", fontWeight: "600" },
 
   // Input Card
   inputCard: {

@@ -1,3 +1,4 @@
+import { ConfirmDeleteModal } from "@/components/DeleteBox"; // Fixed import
 import { GlassCard } from "@/components/GlassCard";
 import { ListItem, NoteItem, ReminderItem } from "@/types/reminder"; // Adjust path as needed
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,12 @@ export default function ReminderListScreen() {
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Tracks which item is about to be deleted
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    type: "reminder" | "note";
+  } | null>(null);
 
   //Data Aggregation Logic:
   //Retrieve all keys. Filter for 'Master Keys' (the primary IDs).Batch-fetch metadata (names, times, bodies) for each ID.
@@ -119,33 +126,36 @@ export default function ReminderListScreen() {
    * Multi-key deletion ensures no 'ghost' data remains in AsyncStorage.
    * For reminders, we also interface with the hardware-level Notification center.
    */
-  const deleteItem = async (holidayId: string, type: "reminder" | "note") => {
+  // The actual deletion execution
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { id, type } = pendingDelete;
+
     try {
       if (type === "reminder") {
-        const notifId = await AsyncStorage.getItem(`@reminder_${holidayId}`);
+        const notifId = await AsyncStorage.getItem(`@reminder_${id}`);
         if (notifId)
           await Notifications.cancelScheduledNotificationAsync(notifId);
-
         await AsyncStorage.multiRemove([
-          `@reminder_${holidayId}`,
-          `@reminder_body_${holidayId}`,
-          `@reminder_time_${holidayId}`,
-          `@reminder_name_${holidayId}`,
-          `@reminder_desc_${holidayId}`,
+          `@reminder_${id}`,
+          `@reminder_body_${id}`,
+          `@reminder_time_${id}`,
+          `@reminder_name_${id}`,
+          `@reminder_desc_${id}`,
         ]);
       } else {
         await AsyncStorage.multiRemove([
-          `@note_${holidayId}`,
-          `@note_name_${holidayId}`,
-          `@note_desc_${holidayId}`,
+          `@note_${id}`,
+          `@note_name_${id}`,
+          `@note_desc_${id}`,
         ]);
       }
-      fetchData(); // UI Refresh
+      setPendingDelete(null);
+      fetchData();
     } catch (e) {
       console.error("Deletion Error:", e);
     }
   };
-
   const formatDate = (id: string) => {
     const parts = id.split("-");
     if (parts.length < 3) return "Holiday";
@@ -220,7 +230,9 @@ export default function ReminderListScreen() {
 
             {/* RIGHT: Delete Action */}
             <TouchableOpacity
-              onPress={() => deleteItem(item.holidayId, item.type)}
+              onPress={() =>
+                setPendingDelete({ id: item.holidayId, type: item.type })
+              } // Open Modal
               style={styles.deleteBtn}
             >
               <View style={styles.deleteIconBg}>
@@ -273,6 +285,18 @@ export default function ReminderListScreen() {
           />
         )}
       </View>
+
+      <ConfirmDeleteModal
+        visible={pendingDelete !== null}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title={
+          pendingDelete?.type === "reminder"
+            ? "Delete Reminder?"
+            : "Delete Note?"
+        }
+        message="This action cannot be undone. All data for this holiday will be removed."
+      />
     </View>
   );
 }
