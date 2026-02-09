@@ -25,7 +25,7 @@ export default function CultureScreen() {
       <View style={styles.headerContainer}>
         <Text style={styles.header}>2026</Text>
         <View style={styles.subHeaderRow}>
-          <Text style={styles.subHeader}>MYANMAR PUBLIC HOLIDAYS</Text>
+          <Text style={styles.subHeader}>Myanmar’s long public holidays</Text>
         </View>
       </View>
 

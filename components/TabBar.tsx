@@ -57,7 +57,7 @@ export function CustomTabBar() {
 const styles = StyleSheet.create({
   tabBarWrapper: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
     alignSelf: "center",
     width: "90%",
     height: 60,
