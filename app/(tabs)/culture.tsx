@@ -1,9 +1,9 @@
-import { GlassCard } from "@/components/GlassCard";
+import { CustomGlass } from "@/components/CustomGlassCard";
 import { HOLIDAYS_2026 } from "@/constants/HolidayCard";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 /**
  * CultureScreen:
@@ -25,7 +25,7 @@ export default function CultureScreen() {
       <View style={styles.headerContainer}>
         <Text style={styles.header}>2026</Text>
         <View style={styles.subHeaderRow}>
-          <Text style={styles.subHeader}>Myanmar’s long public holidays</Text>
+          <Text style={styles.subHeader}>MYANMAR PUBLIC LONG HOLIDAYS</Text>
         </View>
       </View>
 
@@ -48,7 +48,7 @@ export default function CultureScreen() {
             </View>
 
             {/* Cultural Information Card */}
-            <GlassCard style={styles.horizontalCard}>
+            <CustomGlass style={styles.horizontalCard}>
               <View>
                 <View style={styles.cardHeader}>
                   {/* Dynamic Color Palette based on Holiday Type */}
@@ -110,7 +110,7 @@ export default function CultureScreen() {
                   {getVibeSuffix(item.name)}
                 </Text>
               </View>
-            </GlassCard>
+            </CustomGlass>
           </View>
         ))}
       </ScrollView>
@@ -120,7 +120,7 @@ export default function CultureScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  headerContainer: { marginTop: 80, paddingHorizontal: 30, marginBottom: 60 },
+  headerContainer: { marginTop: 70, paddingHorizontal: 30, marginBottom: 1 },
   header: {
     fontSize: 52,
     fontWeight: "900",
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   horizontalContainer: {
     paddingLeft: 25,
     paddingRight: 50,
-    paddingTop: 40,
+    paddingTop: 30,
     paddingBottom: 60,
   },
   cardWrapper: {
@@ -177,12 +177,13 @@ const styles = StyleSheet.create({
   },
   horizontalCard: {
     width: SCREEN_WIDTH * 0.8, // 🔒 lock width
-    padding: 30,
+    height: SCREEN_HEIGHT * 0.55, // 👈 Explicit height to make it "taller"
+    padding: 20,
     borderRadius: 45,
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
-    alignSelf: "stretch",
+    backgroundColor: "rgba(255, 255, 255, 0.49)",
   },
 
   cardHeader: {
@@ -218,7 +219,12 @@ const styles = StyleSheet.create({
     color: "#3A3A3C",
     marginTop: 8,
   },
-  divider: { height: 1, backgroundColor: "#D1D1D6", marginBottom: 20 },
+  divider: {
+    height: 1,
+    backgroundColor: "#D1D1D6",
+    marginBottom: 20,
+    marginTop: 50,
+  },
   footerRow: {
     flexDirection: "row",
     justifyContent: "space-between",

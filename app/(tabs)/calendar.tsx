@@ -1,11 +1,11 @@
 import holidayData from "@/assets/holidays.json";
-import { GlassCard } from "@/components/GlassCard";
+import { CustomGlass } from "@/components/CustomGlassCard";
 import { router } from "expo-router";
 import React, { useMemo } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 /**
  * Calendar Screen Component:
@@ -49,59 +49,68 @@ export default function CalendarScreen() {
          Wrapping the calendar in GlassCard provides a modern, 
          semi-transparent aesthetic consistent with the app's theme.
       */}
-      <GlassCard style={styles.glassAdjust}>
-        <Calendar
-          hideExtraDays={false}
-          enableSwipeMonths={true}
-          markedDates={markedDates}
-          theme={{
-            // Theming: Ensuring the calendar looks native to the app
-            calendarBackground: "transparent",
-            monthTextColor: "#007AFF",
-            textMonthFontWeight: "800",
-            textMonthFontSize: 18,
-            textSectionTitleColor: "#0056b3",
-            arrowColor: "#007AFF",
-            dayTextColor: "#2C3E50",
-            textDayFontWeight: "600",
-            textDisabledColor: "rgba(0, 0, 0, 0.25)",
-            todayTextColor: "#007AFF",
-          }}
-          /**
-           * Interaction Handler:
-           * Checks if a tapped date is a known holiday.
-           * Redirects to the detail view with pre-filled holiday info or a blank state.
-           */
-          onDayPress={(day) => {
-            const selectedHoliday = holidayData.response.holidays.find(
-              (h) => h.date.iso === day.dateString,
-            );
 
-            if (selectedHoliday) {
-              // Deep Link to Holiday Details
-              const combinedId = `${selectedHoliday.date.iso}|${selectedHoliday.urlid}`;
-              router.push({
-                pathname: "/details/[id]",
-                params: {
-                  id: encodeURIComponent(combinedId),
-                  name: selectedHoliday.name,
-                  desc: selectedHoliday.description,
-                },
-              });
-            } else {
-              // Standard Date Navigation (No specific holiday)
-              router.push({
-                pathname: "/details/[id]",
-                params: {
-                  id: day.dateString,
-                  name: `Date: ${day.dateString}`,
-                  desc: "There are no national holidays on this day.",
-                },
-              });
-            }
-          }}
-        />
-      </GlassCard>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>2026</Text>
+        <View style={styles.subHeaderRow}>
+          <Text style={styles.subHeader}>MYANMAR PUBLIC HOLIDAYS</Text>
+        </View>
+      </View>
+      <View style={{ flex: 1, alignItems: "center" }}>
+        <CustomGlass style={styles.glassAdjust}>
+          <Calendar
+            hideExtraDays={false}
+            enableSwipeMonths={true}
+            markedDates={markedDates}
+            theme={{
+              // Theming: Ensuring the calendar looks native to the app
+              calendarBackground: "transparent",
+              monthTextColor: "#007AFF",
+              textMonthFontWeight: "800",
+              textMonthFontSize: 18,
+              textSectionTitleColor: "#0056b3",
+              arrowColor: "#007AFF",
+              dayTextColor: "#2C3E50",
+              textDayFontWeight: "600",
+              textDisabledColor: "rgba(0, 0, 0, 0.25)",
+              todayTextColor: "#007AFF",
+            }}
+            /**
+             * Interaction Handler:
+             * Checks if a tapped date is a known holiday.
+             * Redirects to the detail view with pre-filled holiday info or a blank state.
+             */
+            onDayPress={(day) => {
+              const selectedHoliday = holidayData.response.holidays.find(
+                (h) => h.date.iso === day.dateString,
+              );
+
+              if (selectedHoliday) {
+                // Deep Link to Holiday Details
+                const combinedId = `${selectedHoliday.date.iso}|${selectedHoliday.urlid}`;
+                router.push({
+                  pathname: "/details/[id]",
+                  params: {
+                    id: encodeURIComponent(combinedId),
+                    name: selectedHoliday.name,
+                    desc: selectedHoliday.description,
+                  },
+                });
+              } else {
+                // Standard Date Navigation (No specific holiday)
+                router.push({
+                  pathname: "/details/[id]",
+                  params: {
+                    id: day.dateString,
+                    name: `Date: ${day.dateString}`,
+                    desc: "There are no national holidays on this day.",
+                  },
+                });
+              }
+            }}
+          />
+        </CustomGlass>
+      </View>
     </View>
   );
 }
@@ -109,12 +118,35 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    paddingTop: 80,
   },
   glassAdjust: {
-    width: width * 0.95, // Dynamic width for cross-device compatibility
+    width: width * 0.95,
+    height: height * 0.42, // Dynamic height for cross-device compatibility
     padding: 10,
     borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.49)",
   },
+  subHeader: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "800",
+    letterSpacing: 1.5,
+  },
+  subHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    gap: 10,
+  },
+  header: {
+    fontSize: 52,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    lineHeight: 52,
+    letterSpacing: -2,
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  headerContainer: { marginTop: 70, paddingHorizontal: 30, marginBottom: 50 },
 });

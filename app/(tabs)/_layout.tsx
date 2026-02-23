@@ -4,8 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
 import { TabList, Tabs, TabSlot, TabTrigger } from "expo-router/ui";
 import { useEffect } from "react";
-import { ImageBackground, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ImageBackground, StyleSheet, View } from "react-native";
 
 export default function RootLayout() {
   useEffect(() => {
@@ -22,7 +21,7 @@ export default function RootLayout() {
     checkPermissions();
   }, []);
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <ImageBackground
         source={{
           uri: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",
@@ -54,6 +53,6 @@ export default function RootLayout() {
         </TabList>
         <CustomTabBar />
       </Tabs>
-    </SafeAreaView>
+    </View>
   );
 }
